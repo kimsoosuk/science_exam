@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>김수석 과학 해설 선생님</title>
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="importmap">
@@ -21,12 +22,40 @@
 
   <style>
     /* 기본 애니메이션 및 스크롤 디자인 추가 (Tailwind 보완) */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-    @keyframes bounceSubtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-    .animate-bounce-subtle { animation: bounceSubtle 2s infinite ease-in-out; }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes bounceSubtle {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    .animate-bounce-subtle {
+      animation: bounceSubtle 2s infinite ease-in-out;
+    }
   </style>
 </head>
+
 <body class="bg-slate-50">
   <div id="root"></div>
 
@@ -83,7 +112,7 @@
     const INITIAL_PROBLEMS = MOCK_IMAGE_URLS.map((url, index) => ({
       id: `p${index + 1}`,
       number: index + 1,
-      subject: SUBJECT_MAPPING[index], 
+      subject: SUBJECT_MAPPING[index],
       imageUrl: url,
       correctAnswer: CORRECT_ANSWERS[index]
     }));
@@ -111,7 +140,7 @@
     const renderWithBold = (text) => {
       if (!text) return null;
       const str = extractString(text);
-      
+
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
@@ -124,7 +153,7 @@
     const FormattedParagraphs = ({ text, className }) => {
       if (!text) return null;
       let cleaned = cleanTextStr(text);
-      cleaned = cleaned.replace(/\\n/g, '\n'); 
+      cleaned = cleaned.replace(/\\n/g, '\n');
       const paragraphs = cleaned.split('\n').filter(p => p.trim() !== '');
 
       if (paragraphs.length === 0) return <span className="text-slate-400 italic font-medium">설명이 누락되었어.</span>;
@@ -182,12 +211,12 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          
+
           if (!response.ok) throw new Error(`API Error: ${response.status}`);
-          
+
           const data = await response.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          
+
           if (responseSchema) {
             try {
               let cleanText = text.trim();
@@ -217,9 +246,9 @@
         intro: { type: "STRING", description: "문제에 대한 전반적인 소개. 다정하고 친절한 멘토의 반말투로 작성." },
         coreConcept: {
           type: "OBJECT",
-          properties: { 
-            title: { type: "STRING", description: "개념의 제목만 작성. 절대 마크다운(*)을 쓰지 마!" }, 
-            content: { type: "STRING", description: "핵심 개념 설명. 길게 작성할 땐 '\\n\\n'으로 문단을 꼭 나눠." } 
+          properties: {
+            title: { type: "STRING", description: "개념의 제목만 작성. 절대 마크다운(*)을 쓰지 마!" },
+            content: { type: "STRING", description: "핵심 개념 설명. 길게 작성할 땐 '\\n\\n'으로 문단을 꼭 나눠." }
           },
           required: ["title", "content"]
         },
@@ -248,7 +277,7 @@
         title: { type: "STRING", description: "개념어 제목. 절대 마크다운 기호를 쓰지 마!" },
         etymology: {
           type: "OBJECT",
-          properties: { 
+          properties: {
             hasHanja: { type: "BOOLEAN", description: "개념어에 한자가 포함되면 true, 아니면 false" },
             hanjaTerm: { type: "STRING", description: "한자 표기 (예: 光合成). 한자가 없으면 빈 문자열. 절대 마크다운 쓰지 마." },
             hanjaMeaning: { type: "STRING", description: "반드시 각 한자의 뜻과 음을 상세히 하나씩 풀고, 마지막에 이 한자들이 합쳐져서 왜 이런 단어 뜻이 되었는지 단어 전체의 유래와 설명을 완벽하게 이어서 써 줘. (예: 光: 빛 광, 合: 합할 합, 成: 이룰 성 \\n\\n 즉 빛을 모아서 무언가를 이룬다는 뜻으로...). 한자가 없으면 빈 문자열." },
@@ -260,9 +289,9 @@
         },
         definition: {
           type: "OBJECT",
-          properties: { 
-            summary: { type: "STRING", description: "단 한 줄로 짧게 요약." }, 
-            detail: { type: "STRING", description: "상세한 설명. '\\n\\n'으로 문단 분리." } 
+          properties: {
+            summary: { type: "STRING", description: "단 한 줄로 짧게 요약." },
+            detail: { type: "STRING", description: "상세한 설명. '\\n\\n'으로 문단 분리." }
           },
           required: ["summary", "detail"]
         },
@@ -328,64 +357,76 @@
       );
     };
 
-    const Container = ({ children, title, onGoHome }) => (
-      <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
-        <header className="w-full bg-white border-b border-indigo-100 p-4 shadow-sm sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto flex items-center justify-between w-full">
-            <h1 className="text-xl font-bold flex items-center gap-3 text-indigo-900">
-              <img src={TEACHER_ICON} alt="김수석" className="w-10 h-10 rounded-full bg-white object-cover border-2 border-indigo-200 shadow-sm" />
-              김수석 과학 선생님
-            </h1>
-            <div className="flex items-center gap-3">
-              {title && <span className="text-sm bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-full shadow-inner hidden md:inline-block">{title}</span>}
-              {onGoHome && (
-                 <button onClick={onGoHome} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-full transition-colors">
-                   <Home size={16} />
-                   <span className="text-sm font-bold">처음으로</span>
-                 </button>
-              )}
+    const Container = ({ children, title, onGoHome }) => {
+      const [isVisible, setIsVisible] = useState(true);
+      const [lastScrollY, setLastScrollY] = useState(0);
+
+      useEffect(() => {
+        const handleScroll = () => {
+          const currentScrollY = window.scrollY;
+          // 스크롤을 내리고 현재 위치가 상단 50px 이상일 때 숨김 처리
+          setIsVisible(currentScrollY < lastScrollY || currentScrollY < 50);
+          setLastScrollY(currentScrollY);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, [lastScrollY]);
+
+      return (
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
+          <header className={`w-full bg-white border-b border-indigo-100 p-4 shadow-sm sticky top-0 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+            <div className="max-w-6xl mx-auto flex items-center justify-between w-full">
+              <h1 className="text-xl font-bold flex items-center gap-3 text-indigo-900">
+                <img src={TEACHER_ICON} alt="김수석" className="w-10 h-10 rounded-full bg-white object-cover border-2 border-indigo-200 shadow-sm" />
+                김수석 과학 선생님
+              </h1>
+              <div className="flex items-center gap-3">
+                {title && <span className="text-sm bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-full shadow-inner hidden md:inline-block">{title}</span>}
+                {onGoHome && (
+                  <button onClick={onGoHome} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-full transition-colors">
+                    <Home size={16} />
+                    <span className="text-sm font-bold">처음으로</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
-        <main className="w-full mx-auto flex-1 flex flex-col relative">{children}</main>
-      </div>
-    );
+          </header>
+          <main className="w-full mx-auto flex-1 flex flex-col relative">{children}</main>
+        </div>
+      );
+    };
 
     const HomeView = ({ onStart }) => {
       const [selectedSubject, setSelectedSubject] = useState('물리');
       return (
-        <div className="flex flex-col gap-6 py-8 animate-fade-in w-full max-w-2xl mx-auto p-4">
-          <div className="text-center mb-4">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">2025 고1 3월 학력평가</h2>
-            <p className="text-slate-600 text-lg">김수석 선생님과 함께하는 통합과학 완전 정복</p>
+        <div className="flex flex-col gap-8 py-10 animate-fade-in w-full max-w-2xl mx-auto p-5">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold text-slate-900 mb-3">2025 고1 3월 학력평가</h2>
+            <p className="text-slate-600 text-[17px] font-medium leading-relaxed">새로운 시작의 순간, 흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
           </div>
-          <div className="grid grid-cols-1 gap-6">
-            <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer group" onClick={() => onStart('full')}>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Play size={24} />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900">실전 모의고사 (전체 20문항)</h3>
-                </div>
-                <p className="text-slate-600 text-[15px] leading-relaxed">실제 시험과 동일하게 1번부터 20번까지 순서대로 풀어봅니다.</p>
+          <div className="grid grid-cols-1 gap-8">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+              <div className="flex items-center gap-3 mb-5">
+                <h3 className="text-2xl font-bold text-slate-900">전체 문항 차근차근 풀기</h3>
               </div>
-              <ArrowRight className="text-indigo-400 group-hover:text-indigo-600 transition-colors w-8 h-8" />
+              <p className="text-slate-600 text-[16px] mb-8 leading-relaxed">1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하며, 빈틈을 하나씩 채워나갈 수 있습니다.</p>
+              <button onClick={() => onStart('full')} className="w-full bg-indigo-600 text-white py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-[17px] shadow-md mt-auto">
+                전체 문항 시작하기 <ArrowRight size={20} />
+              </button>
             </div>
-            <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-purple-100 text-purple-600 rounded-2xl"><Beaker size={24} /></div>
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+              <div className="flex items-center gap-3 mb-5">
                 <h3 className="text-2xl font-bold text-slate-900">과목별 집중 학습</h3>
               </div>
-              <p className="text-slate-600 text-[15px] mb-6 leading-relaxed">물리, 화학, 생명과학, 지구과학 중 집중적으로 학습할 과목을 선택하세요.</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <p className="text-slate-600 text-[16px] mb-8 leading-relaxed">어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                 {['물리', '화학', '생명과학', '지구과학'].map(sub => (
-                  <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-3.5 px-2 rounded-2xl text-[16px] font-bold transition-all shadow-sm ${selectedSubject === sub ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' : 'bg-slate-50 text-slate-600 border-2 border-slate-100 hover:bg-slate-100'}`}>
+                  <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-3 px-2 rounded-2xl text-[16px] font-bold transition-all shadow-sm ${selectedSubject === sub ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' : 'bg-slate-50 text-slate-600 border-2 border-slate-100 hover:bg-slate-100'}`}>
                     {sub}
                   </button>
                 ))}
               </div>
-              <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-lg shadow-md">
+              <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full bg-purple-600 text-white py-3.5 rounded-2xl font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-[17px] shadow-md mt-auto">
                 {selectedSubject} 시작하기 <ArrowRight size={20} />
               </button>
             </div>
@@ -430,7 +471,7 @@
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 z-10 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
             <div className="max-w-2xl mx-auto flex items-center gap-4">
               <div className="flex-1 bg-white rounded-2xl border-2 border-indigo-100 overflow-hidden flex shadow-sm focus-within:border-indigo-500 transition-colors">
-                 <span className="bg-indigo-50 text-indigo-700 font-bold px-5 flex items-center justify-center shrink-0">정답</span>
+                <span className="bg-indigo-50 text-indigo-700 font-bold px-5 flex items-center justify-center shrink-0">정답</span>
                 <input type="number" min="1" max="5" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="1~5 입력" disabled={isSubmitting} className="flex-1 p-4 text-xl text-center outline-none font-bold text-slate-800 bg-transparent disabled:opacity-50" />
               </div>
               <button onClick={handleSubmit} disabled={!answer || isSubmitting} className="bg-indigo-600 disabled:bg-slate-300 text-white px-8 py-4 rounded-2xl font-bold transition-all hover:bg-indigo-700 shadow-lg text-lg shrink-0">
@@ -489,7 +530,7 @@
                 <div className="grid gap-4">
                   {optionsList.map((opt, idx) => {
                     const optDetail = opt?.detail || opt?.explanation || opt?.reason || opt?.desc || opt?.content || opt?.text;
-                    const hasValidDetail = optDetail && optDetail.length > 10; 
+                    const hasValidDetail = optDetail && optDetail.length > 10;
                     return (
                       <div key={idx} className={`p-6 rounded-3xl bg-white transition-colors ${opt?.isCorrect ? 'border-4 border-slate-800 shadow-md' : 'border-2 border-slate-200 shadow-sm'}`}>
                         <div className="flex items-start gap-3 mb-4">
@@ -542,13 +583,13 @@
                       const conceptName = cleanTitleStr(typeof conceptItem === 'object' ? conceptItem.name || JSON.stringify(conceptItem) : conceptItem);
                       return (
                         <button key={idx} onClick={() => onConceptClick(conceptName)} className="px-6 py-3 bg-indigo-600 text-white rounded-full text-[16px] font-bold hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md flex items-center gap-2">
-                          <BookOpen size={18} className="shrink-0 text-indigo-200"/> {conceptName}
+                          <BookOpen size={18} className="shrink-0 text-indigo-200" /> {conceptName}
                         </button>
                       );
                     })}
                   </div>
                 ) : (
-                    <div className="text-lg text-slate-500 py-4 italic font-medium text-center">추가로 볼 개념어는 없어.</div>
+                  <div className="text-lg text-slate-500 py-4 italic font-medium text-center">추가로 볼 개념어는 없어.</div>
                 )}
                 <div className="w-full mt-2"><ChatInput onSubmit={onConceptClick} placeholder="궁금한 게 더 있으면 물어봐!" /></div>
               </div>
@@ -587,8 +628,8 @@
           <div className="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-indigo-500 flex items-start gap-4 relative overflow-hidden">
             <img src={TEACHER_ICON} alt="선생님" className="w-16 h-16 rounded-full bg-white object-cover border-2 border-slate-200 shadow-md z-10" />
             <div className="flex-1 z-10">
-               <h2 className="text-2xl font-bold text-slate-900 mb-2">'{cleanTitleStr(concept.title)}' 파헤치기</h2>
-               <p className="text-slate-600 text-[17px] font-medium leading-relaxed">이 개념이 궁금했구나! 어떤 뜻인지 선생님이 쉽게 설명해 줄게.</p>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">'{cleanTitleStr(concept.title)}' 파헤치기</h2>
+              <p className="text-slate-600 text-[17px] font-medium leading-relaxed">이 개념이 궁금했구나! 어떤 뜻인지 선생님이 쉽게 설명해 줄게.</p>
             </div>
           </div>
           {(hasHanja || hasLoanword) && (
@@ -658,7 +699,7 @@
               </div>
               <hr className="border-t-2 border-slate-200 my-2" />
               <button onClick={onNextProblem} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold hover:bg-slate-800 shadow-xl flex items-center justify-center gap-3 transition-colors text-xl">
-                {returnText} <ChevronRight className="w-7 h-7"/>
+                {returnText} <ChevronRight className="w-7 h-7" />
               </button>
             </div>
           </div>
@@ -705,17 +746,17 @@
               <div className="flex-1 mt-1">
                 <h3 className="font-bold text-lg text-indigo-900 mb-3">김수석 선생님의 맞춤 피드백</h3>
                 {isGeneratingSummary ? (
-                   <div className="flex flex-col items-center py-4">
-                     <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
-                     <p className="text-sm text-slate-500 font-medium">네 결과를 분석해서 피드백을 작성하고 있어...</p>
-                   </div>
+                  <div className="flex flex-col items-center py-4">
+                    <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
+                    <p className="text-sm text-slate-500 font-medium">네 결과를 분석해서 피드백을 작성하고 있어...</p>
+                  </div>
                 ) : summaryFeedback ? (
-                   <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
-                     <h4 className="font-bold text-indigo-800 mb-3 text-[17px]">{cleanTitleStr(summaryFeedback.title)}</h4>
-                     <FormattedParagraphs text={summaryFeedback.content} className="text-slate-700 text-[16px] font-medium" />
-                   </div>
+                  <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
+                    <h4 className="font-bold text-indigo-800 mb-3 text-[17px]">{cleanTitleStr(summaryFeedback.title)}</h4>
+                    <FormattedParagraphs text={summaryFeedback.content} className="text-slate-700 text-[16px] font-medium" />
+                  </div>
                 ) : (
-                   <p className="text-slate-500 italic">총평을 불러올 수 없어.</p>
+                  <p className="text-slate-500 italic">총평을 불러올 수 없어.</p>
                 )}
               </div>
             </div>
@@ -822,24 +863,24 @@
           };
           prefetchExplanation();
         }
-      }, [appState, currentProblem]); 
+      }, [appState, currentProblem]);
 
       useEffect(() => {
         if (appState === 'SUMMARY' && !summaryFeedback && !isGeneratingSummary) {
           setIsGeneratingSummary(true);
           const generateSummary = async () => {
             const total = sessionData.queue.length;
-            const incorrectIds = sessionData.queue.filter(id => parseInt(sessionData.answers[id]) !== INITIAL_PROBLEMS.find(p=>p.id === id).correctAnswer);
+            const incorrectIds = sessionData.queue.filter(id => parseInt(sessionData.answers[id]) !== INITIAL_PROBLEMS.find(p => p.id === id).correctAnswer);
             const correctCount = total - incorrectIds.length;
             const score = Math.round((correctCount / total) * 100);
-            const incorrectSubjects = Array.from(new Set(incorrectIds.map(id => INITIAL_PROBLEMS.find(p=>p.id === id).subject)));
+            const incorrectSubjects = Array.from(new Set(incorrectIds.map(id => INITIAL_PROBLEMS.find(p => p.id === id).subject)));
 
             const prompt = `학생이 방금 과학 모의고사를 풀었어. 총 ${total}문제 중 ${correctCount}문제를 맞췄고, 정답률은 ${score}%야. ${incorrectIds.length > 0 ? `틀린 과목은 [${incorrectSubjects.join(', ')}]야.` : '틀린 문제가 없어 완벽해!'} 이 결과를 바탕으로, 1타 과학 강사 김수석의 다정하지만 뼈를 때리는 반말투로 총평(피드백)을 작성해줘. 칭찬할 건 칭찬하되, 틀린 과목에 대해서는 어떻게 보완해야 할지 실질적이고 따끔한 조언을 해줘. title에는 마크다운을 절대 쓰지 마. content에는 단락 구분을 위해 '\\n\\n'을 꼭 쓰고, 중요한 단어만 **단어** 로 강조해.`;
 
             try {
               const result = await callGeminiAPI(prompt, "너는 통찰력 있고 다정한 1타 과학 강사야.", null, SUMMARY_SCHEMA);
               setSummaryFeedback(result);
-            } catch(e) {
+            } catch (e) {
               setSummaryFeedback({ title: "학습 완료!", content: "고생했어! 결과 데이터를 확인하고 틀린 문제를 복습해보자." });
             } finally { setIsGeneratingSummary(false); }
           };
@@ -881,14 +922,14 @@
         try {
           const prompt = `과학 개념어 '${conceptName}'에 대해 쉽게 설명해줘. 어원 분석 시 한자와 외래어를 구분해서 상세히 적어줘.`;
           let result;
-          try { result = await callGeminiAPI(prompt, CONCEPT_FEW_SHOT, null, CONCEPT_SCHEMA); } 
+          try { result = await callGeminiAPI(prompt, CONCEPT_FEW_SHOT, null, CONCEPT_SCHEMA); }
           catch (apiError) {
-             result = {
-                title: conceptName,
-                etymology: { hasHanja: false, hanjaTerm: "", hanjaMeaning: "", hasLoanword: false, loanwordTerm: "", loanwordMeaning: "" },
-                definition: { summary: "개념을 불러오지 못했어.", detail: "네트워크 문제일 수 있어. 다시 시도해 줘." },
-                analogyAndStory: { title: "오류", content: "응답을 처리할 수 없네." }, relatedConcepts: []
-             };
+            result = {
+              title: conceptName,
+              etymology: { hasHanja: false, hanjaTerm: "", hanjaMeaning: "", hasLoanword: false, loanwordTerm: "", loanwordMeaning: "" },
+              definition: { summary: "개념을 불러오지 못했어.", detail: "네트워크 문제일 수 있어. 다시 시도해 줘." },
+              analogyAndStory: { title: "오류", content: "응답을 처리할 수 없네." }, relatedConcepts: []
+            };
           }
           setGeneratedConcepts(prev => ({ ...prev, [conceptName]: result }));
           setViewingConceptName(conceptName); setAppState('CONCEPT');
@@ -919,9 +960,9 @@
           {appState === 'EXPLAIN' && currentProblem && currentExplanation && <ExplainView explanation={currentExplanation} problem={currentProblem} userAnswer={sessionData.answers[currentProblem.id]} onConceptClick={handleConceptClick} onNextProblem={handleNextProblem} isLastProblem={sessionData.currentIndex === sessionData.queue.length - 1} />}
           {appState === 'LOADING_CONCEPT' && (
             <div className="flex flex-col items-center justify-center h-[70vh] text-center animate-fade-in">
-               <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
-               <p className="font-bold text-2xl text-slate-900">선생님이 핵심을 정리하고 있어!</p>
-               <p className="text-slate-600 text-lg mt-2">잠시만 기다려 줘...</p>
+              <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
+              <p className="font-bold text-2xl text-slate-900">선생님이 핵심을 정리하고 있어!</p>
+              <p className="text-slate-600 text-lg mt-2">잠시만 기다려 줘...</p>
             </div>
           )}
           {appState === 'CONCEPT' && viewingConceptName && generatedConcepts[viewingConceptName] && <ConceptView concept={generatedConcepts[viewingConceptName]} originalConcepts={originalConcepts} newConcepts={newConcepts} returnText={conceptReturnText} onNextConcept={handleConceptClick} onNextProblem={() => { if (isSessionComplete) setAppState('SUMMARY'); else handleNextProblem(); }} />}
@@ -934,4 +975,5 @@
     root.render(<App />);
   </script>
 </body>
+
 </html>
