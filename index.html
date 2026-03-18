@@ -7,7 +7,6 @@
   <title>김수석 과학 해설 선생님</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="importmap">
@@ -21,7 +20,7 @@
   </script>
 
   <style>
-    /* 기본 애니메이션 및 스크롤 디자인 추가 (Tailwind 보완) */
+    /* 기본 애니메이션 및 스크롤 디자인 추가 */
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -53,16 +52,26 @@
     .animate-bounce-subtle {
       animation: bounceSubtle 2s infinite ease-in-out;
     }
+
+    /* 책 페이지 안쪽 스크롤바 숨기기 */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 
-<body class="bg-slate-50">
+<body class="bg-slate-200">
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useRef } from 'react';
     import { createRoot } from 'react-dom/client';
-    import { BookOpen, CheckCircle, ChevronRight, ChevronLeft, Play, ArrowRight, RotateCcw, Brain, Beaker, Atom, Globe, Loader2, AlertCircle, Sparkles, Lightbulb, Target, RefreshCw, Home, Send, Key } from 'lucide-react';
+    import { BookOpen, CheckCircle, ChevronRight, ChevronLeft, ArrowRight, RotateCcw, Brain, Globe, Loader2, AlertCircle, Sparkles, Lightbulb, Target, RefreshCw, Home, Send } from 'lucide-react';
 
     // --- API CONFIG (Worker 연결) ---
     const WORKER_URL = "https://science-exam.kimsoosuk1.workers.dev/";
@@ -117,7 +126,7 @@
       correctAnswer: CORRECT_ANSWERS[index]
     }));
 
-    // --- UTILS: 텍스트 정제 및 렌더링 도구 ---
+    // --- UTILS ---
     const extractString = (val) => {
       if (!val) return '';
       if (typeof val === 'string') return val;
@@ -140,11 +149,10 @@
     const renderWithBold = (text) => {
       if (!text) return null;
       const str = extractString(text);
-
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i} className="text-indigo-700 font-bold bg-indigo-50/50 px-1 rounded mx-0.5">{part.slice(2, -2)}</strong>;
+          return <strong key={i} className="text-indigo-800 font-bold bg-indigo-50/80 px-1 rounded mx-0.5">{part.slice(2, -2)}</strong>;
         }
         return <span key={i}>{part}</span>;
       });
@@ -182,7 +190,6 @@
       }
     };
 
-    // 프론트엔드 API 호출부를 수정하여 Worker로 전달
     const callGeminiAPI = async (prompt, systemInstruction, imageBase64 = null, responseSchema = null) => {
       const parts = [{ text: prompt }];
       if (imageBase64) {
@@ -205,7 +212,6 @@
 
       while (attempt < 4) {
         try {
-          // 직접 API 호출 대신 Worker 주소 사용
           const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -237,36 +243,17 @@
       }
     };
 
-    // --- PROMPTS ---
+    // --- PROMPTS (기존과 동일) ---
     const EXPLANATION_SCHEMA = {
       type: "OBJECT",
       properties: {
         correctAnswer: { type: "INTEGER" },
         subject: { type: "STRING" },
-        intro: { type: "STRING", description: "문제에 대한 전반적인 소개. 다정하고 친절한 멘토의 반말투로 작성." },
-        coreConcept: {
-          type: "OBJECT",
-          properties: {
-            title: { type: "STRING", description: "개념의 제목만 작성. 절대 마크다운(*)을 쓰지 마!" },
-            content: { type: "STRING", description: "핵심 개념 설명. 길게 작성할 땐 '\\n\\n'으로 문단을 꼭 나눠." }
-          },
-          required: ["title", "content"]
-        },
-        options: {
-          type: "ARRAY",
-          items: {
-            type: "OBJECT",
-            properties: {
-              label: { type: "STRING" },
-              text: { type: "STRING" },
-              isCorrect: { type: "BOOLEAN" },
-              detail: { type: "STRING", description: "해당 선지가 왜 맞고 틀린지 구체적인 이유를 반드시 2~3문장 이상 길게 설명해. 생략 절대 금지." }
-            },
-            required: ["label", "text", "isCorrect", "detail"]
-          }
-        },
-        outro: { type: "STRING", description: "친절한 마무리 조언." },
-        concepts: { type: "ARRAY", items: { type: "STRING" }, description: "문제 풀이에 필수적이거나 설명 중 등장한 어려운 핵심 개념어 딱 2~4개만 추출." }
+        intro: { type: "STRING" },
+        coreConcept: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] },
+        options: { type: "ARRAY", items: { type: "OBJECT", properties: { label: { type: "STRING" }, text: { type: "STRING" }, isCorrect: { type: "BOOLEAN" }, detail: { type: "STRING" } }, required: ["label", "text", "isCorrect", "detail"] } },
+        outro: { type: "STRING" },
+        concepts: { type: "ARRAY", items: { type: "STRING" } }
       },
       required: ["correctAnswer", "subject", "intro", "coreConcept", "options", "concepts"]
     };
@@ -274,81 +261,33 @@
     const CONCEPT_SCHEMA = {
       type: "OBJECT",
       properties: {
-        title: { type: "STRING", description: "개념어 제목. 절대 마크다운 기호를 쓰지 마!" },
-        etymology: {
-          type: "OBJECT",
-          properties: {
-            hasHanja: { type: "BOOLEAN", description: "개념어에 한자가 포함되면 true, 아니면 false" },
-            hanjaTerm: { type: "STRING", description: "한자 표기 (예: 光合成). 한자가 없으면 빈 문자열. 절대 마크다운 쓰지 마." },
-            hanjaMeaning: { type: "STRING", description: "반드시 각 한자의 뜻과 음을 상세히 하나씩 풀고, 마지막에 이 한자들이 합쳐져서 왜 이런 단어 뜻이 되었는지 단어 전체의 유래와 설명을 완벽하게 이어서 써 줘. (예: 光: 빛 광, 合: 합할 합, 成: 이룰 성 \\n\\n 즉 빛을 모아서 무언가를 이룬다는 뜻으로...). 한자가 없으면 빈 문자열." },
-            hasLoanword: { type: "BOOLEAN", description: "개념어가 영어나 외래어에서 유래했으면 true, 아니면 false" },
-            loanwordTerm: { type: "STRING", description: "영어/외래어 원어 표기 (예: Photosynthesis). 외래어가 없으면 빈 문자열. 마크다운 쓰지 마." },
-            loanwordMeaning: { type: "STRING", description: "해당 영어/외래어 단어의 어원과 뜻 풀이를 상세히 적어. 외래어가 없으면 빈 문자열." }
-          },
-          required: ["hasHanja", "hanjaTerm", "hanjaMeaning", "hasLoanword", "loanwordTerm", "loanwordMeaning"]
-        },
-        definition: {
-          type: "OBJECT",
-          properties: {
-            summary: { type: "STRING", description: "단 한 줄로 짧게 요약." },
-            detail: { type: "STRING", description: "상세한 설명. '\\n\\n'으로 문단 분리." }
-          },
-          required: ["summary", "detail"]
-        },
-        analogyAndStory: {
-          type: "OBJECT",
-          properties: {
-            title: { type: "STRING", description: "비유의 소제목 (짧게 작성). 마크다운 금지." },
-            content: { type: "STRING", description: "비유나 스토리를 활용해 쉽게 풀어서 설명. 내용이 길면 '\\n\\n'으로 문단 분리 필수." }
-          },
-          required: ["title", "content"]
-        },
-        relatedConcepts: {
-          type: "ARRAY",
-          items: { type: "STRING", description: "마크다운 금지" },
-          description: "방금 설명한 내용과 관련해서 이어서 공부하면 좋은 새로운 핵심 개념어 2~3개."
-        }
+        title: { type: "STRING" },
+        etymology: { type: "OBJECT", properties: { hasHanja: { type: "BOOLEAN" }, hanjaTerm: { type: "STRING" }, hanjaMeaning: { type: "STRING" }, hasLoanword: { type: "BOOLEAN" }, loanwordTerm: { type: "STRING" }, loanwordMeaning: { type: "STRING" } }, required: ["hasHanja", "hanjaTerm", "hanjaMeaning", "hasLoanword", "loanwordTerm", "loanwordMeaning"] },
+        definition: { type: "OBJECT", properties: { summary: { type: "STRING" }, detail: { type: "STRING" } }, required: ["summary", "detail"] },
+        analogyAndStory: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] },
+        relatedConcepts: { type: "ARRAY", items: { type: "STRING" } }
       },
       required: ["title", "etymology", "definition", "analogyAndStory", "relatedConcepts"]
     };
 
     const SUMMARY_SCHEMA = {
       type: "OBJECT",
-      properties: {
-        title: { type: "STRING", description: "총평 제목 (예: 아쉬운 실수가 있었지만 훌륭해!). 절대 마크다운 기호를 쓰지 마." },
-        content: { type: "STRING", description: "학생의 정답률과 틀린 과목들을 분석해서 해주는 다정하고 핵심을 찌르는 조언. 문단 분리를 위해 '\\n\\n'을 꼭 쓸 것." }
-      },
+      properties: { title: { type: "STRING" }, content: { type: "STRING" } },
       required: ["title", "content"]
     };
 
-    const EXPLANATION_FEW_SHOT = `당신은 똑똑하고 다정하며 논리적인 1타 과학 선생님이야. 주어진 문제 이미지를 분석하고 하드코딩된 정답을 기반으로 아래 JSON 포맷으로 해설을 작성해.
-[절대 규칙]
-1. 존댓말 금지. 건방지거나 까불거리는 말투 절대 금지. 학생을 진심으로 아끼는 차분하고 다정한 멘토의 반말투(해, 야, 어, 지)를 유지해.
-2. 이모지 절대 금지. 중요 단어를 강조할 때만 본문에 **단어** 형식으로 묶어서 줘.
-3. title 필드에는 절대로 ** 등 마크다운 기호를 쓰지 마!
-4. 가독성을 위해 단락이 바뀔 때 무조건 '\\n\\n'으로 줄바꿈 해.
-5. 각 선지(옵션)의 detail 설명은 절대 대충 넘어가지 말고 왜 정답이고 오답인지 2문장 이상 상세하게 써!`;
-
-    const CONCEPT_FEW_SHOT = `당신은 다정하고 차분한 1타 과학 선생님이야. 학생이 물어본 과학 개념어를 아래 JSON 포맷에 맞게 설명해 줘.
-[절대 규칙]
-1. 건방지거나 까불거리는 말투 금지. 다정하고 차분하게 설명해 주는 선생님의 반말투 유지.
-2. 이모지 금지. 핵심 강조에만 **단어**를 써 줘.
-3. title 필드들에는 절대로 ** 등 마크다운 기호를 쓰지 마!
-4. etymology의 meaning 필드는 절대로 비워두지 마. 한자는 각 글자의 음과 뜻(예: 光: 빛 광)을 무조건 하나씩 분리해서 풀고, 마지막에 이 글자들이 합쳐져서 전체적으로 어떤 단어 뜻이 되는지까지 완벽하게 이어지게 설명해! 영어도 어원을 정확하게 풀어서 설명해 줘.
-5. 비유와 스토리 파트(analogyAndStory)를 꼭 넣어서, 개념을 쉽게 이해할 수 있게 도와줘.`;
+    const EXPLANATION_FEW_SHOT = `당신은 똑똑하고 다정하며 논리적인 1타 과학 선생님이야. 주어진 문제 이미지를 분석하고 하드코딩된 정답을 기반으로 아래 JSON 포맷으로 해설을 작성해.\n[절대 규칙]\n1. 존댓말 금지. 반말투 유지.\n2. 이모지 금지. **단어** 형식 강조만 허용.\n3. title 필드 마크다운 금지.\n4. 단락 구분 '\\n\\n' 필수.\n5. 각 선지 detail은 2문장 이상 상세하게.`;
+    const CONCEPT_FEW_SHOT = `당신은 다정하고 차분한 1타 과학 선생님이야. 학생이 물어본 과학 개념어를 아래 JSON 포맷에 맞게 설명해 줘.\n[절대 규칙]\n1. 반말투 유지.\n2. 이모지 금지.\n3. title 필드 마크다운 금지.\n4. 어원 뜻 풀이 상세하게 작성.\n5. 비유와 스토리 필수.`;
 
     // --- COMPONENTS ---
     const ChatInput = ({ onSubmit, placeholder, className }) => {
       const [input, setInput] = useState('');
       const handleFormSubmit = (e) => {
         e.preventDefault();
-        if (input.trim()) {
-          onSubmit(input.trim());
-          setInput('');
-        }
+        if (input.trim()) { onSubmit(input.trim()); setInput(''); }
       };
       return (
-        <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 w-full max-w-lg mx-auto bg-white p-2 pl-4 rounded-full border-2 border-indigo-100 shadow-sm focus-within:border-indigo-400 transition-colors ${className || ''}`}>
+        <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 w-full max-w-lg mx-auto bg-white p-2 pl-4 rounded-full border-2 border-slate-200 shadow-sm focus-within:border-indigo-400 transition-colors ${className || ''}`}>
           <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={placeholder || "궁금한 게 더 있으면 물어봐!"} className="flex-1 bg-transparent py-2 outline-none text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-medium text-[15px]" />
           <button type="submit" disabled={!input.trim()} className="bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center shrink-0">
             <Send size={18} className="ml-0.5" />
@@ -357,82 +296,98 @@
       );
     };
 
-    const Container = ({ children, title, onGoHome }) => {
-      const [isVisible, setIsVisible] = useState(true);
-      const [lastScrollY, setLastScrollY] = useState(0);
-
-      useEffect(() => {
-        const handleScroll = () => {
-          const currentScrollY = window.scrollY;
-          // 스크롤을 내리고 현재 위치가 상단 50px 이상일 때 숨김 처리
-          setIsVisible(currentScrollY < lastScrollY || currentScrollY < 50);
-          setLastScrollY(currentScrollY);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-      }, [lastScrollY]);
-
+    // --- BOOK LAYOUT METAPHOR ---
+    const BookLayout = ({ leftPage, rightPage, headerLeft, headerRight, onGoHome }) => {
       return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
-          <header className={`w-full bg-white border-b border-indigo-100 p-4 shadow-sm sticky top-0 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-            <div className="max-w-6xl mx-auto flex items-center justify-between w-full">
-              <h1 className="text-xl font-bold flex items-center gap-3 text-indigo-900">
-                <img src={TEACHER_ICON} alt="김수석" className="w-10 h-10 rounded-full bg-white object-cover border-2 border-indigo-200 shadow-sm" />
-                김수석 과학 선생님
-              </h1>
-              <div className="flex items-center gap-3">
-                {title && <span className="text-sm bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-full shadow-inner hidden md:inline-block">{title}</span>}
+        <div className="min-h-screen font-sans text-slate-800 flex items-center justify-center p-2 sm:p-4 md:p-8">
+          {/* 책 커버 느낌의 래퍼 */}
+          <div className="w-full max-w-[1200px] bg-slate-50 flex flex-col md:flex-row rounded-lg md:rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] border-[8px] md:border-[16px] border-slate-800 relative h-[90vh] md:h-[85vh] overflow-hidden">
+
+            {/* 책 가운데 제본선 (Crease) - 데스크탑에서만 보임 */}
+            <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-16 -ml-8 bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none z-50 shadow-[inset_0_0_20px_rgba(0,0,0,0.05)] border-l border-r border-slate-200/50"></div>
+
+            {/* --- 왼쪽 페이지 --- */}
+            <div className="w-full md:w-1/2 h-1/2 md:h-full bg-[#fdfdfb] border-b md:border-b-0 md:border-r border-slate-300 flex flex-col relative">
+              {/* 페이지 헤더 */}
+              <div className="h-14 md:h-16 px-6 md:px-10 flex items-center justify-between border-b border-slate-100 shrink-0">
+                <div className="text-slate-400 font-semibold text-sm tracking-widest">{headerLeft || '과학탐구영역'}</div>
                 {onGoHome && (
-                  <button onClick={onGoHome} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-full transition-colors">
-                    <Home size={16} />
-                    <span className="text-sm font-bold">처음으로</span>
+                  <button onClick={onGoHome} className="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 text-sm font-bold">
+                    <Home size={14} /> 홈으로
                   </button>
                 )}
               </div>
+              {/* 콘텐츠 영역 */}
+              <div className="flex-1 overflow-y-auto hide-scrollbar p-6 md:p-10 relative">
+                {leftPage}
+              </div>
+              {/* 페이지 번호 */}
+              <div className="absolute bottom-4 left-6 md:left-10 text-slate-300 font-serif text-sm">1</div>
             </div>
-          </header>
-          <main className="w-full mx-auto flex-1 flex flex-col relative">{children}</main>
+
+            {/* --- 오른쪽 페이지 --- */}
+            <div className="w-full md:w-1/2 h-1/2 md:h-full bg-[#fdfdfb] flex flex-col relative">
+              {/* 페이지 헤더 */}
+              <div className="h-14 md:h-16 px-6 md:px-10 flex items-center justify-between border-b border-slate-100 shrink-0">
+                <div className="text-slate-400 font-semibold text-sm tracking-widest">{headerRight || '김수석 선생님의 바이블'}</div>
+              </div>
+              {/* 콘텐츠 영역 */}
+              <div className="flex-1 overflow-y-auto hide-scrollbar p-6 md:p-10 relative">
+                {rightPage}
+              </div>
+              {/* 페이지 번호 */}
+              <div className="absolute bottom-4 right-6 md:right-10 text-slate-300 font-serif text-sm">2</div>
+            </div>
+
+          </div>
         </div>
       );
     };
 
+    // --- VIEWS ---
+
     const HomeView = ({ onStart }) => {
       const [selectedSubject, setSelectedSubject] = useState('물리');
-      return (
-        <div className="flex flex-col gap-8 py-10 animate-fade-in w-full max-w-2xl mx-auto p-5">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-slate-900 mb-3">2025 고1 3월 학력평가</h2>
-            <p className="text-slate-600 text-[17px] font-medium leading-relaxed">새로운 시작의 순간, 흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
+
+      const leftContent = (
+        <div className="flex flex-col justify-center h-full animate-fade-in max-w-md mx-auto py-10">
+          <div className="mb-12 text-center md:text-left">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">2025 고1 3월<br />학력평가 해설</h2>
+            <p className="text-slate-500 text-[17px] font-medium leading-relaxed">새로운 시작의 순간, 흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
           </div>
-          <div className="grid grid-cols-1 gap-8">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-              <div className="flex items-center gap-3 mb-5">
-                <h3 className="text-2xl font-bold text-slate-900">전체 문항 차근차근 풀기</h3>
-              </div>
-              <p className="text-slate-600 text-[16px] mb-8 leading-relaxed">1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하며, 빈틈을 하나씩 채워나갈 수 있습니다.</p>
-              <button onClick={() => onStart('full')} className="w-full bg-indigo-600 text-white py-3.5 rounded-2xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-[17px] shadow-md mt-auto">
-                전체 문항 시작하기 <ArrowRight size={20} />
-              </button>
-            </div>
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-              <div className="flex items-center gap-3 mb-5">
-                <h3 className="text-2xl font-bold text-slate-900">과목별 집중 학습</h3>
-              </div>
-              <p className="text-slate-600 text-[16px] mb-8 leading-relaxed">어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                {['물리', '화학', '생명과학', '지구과학'].map(sub => (
-                  <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-3 px-2 rounded-2xl text-[16px] font-bold transition-all shadow-sm ${selectedSubject === sub ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' : 'bg-slate-50 text-slate-600 border-2 border-slate-100 hover:bg-slate-100'}`}>
-                    {sub}
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full bg-purple-600 text-white py-3.5 rounded-2xl font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-[17px] shadow-md mt-auto">
-                {selectedSubject} 시작하기 <ArrowRight size={20} />
-              </button>
-            </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col transition-all hover:border-indigo-300">
+            <h3 className="text-xl font-bold text-indigo-900 mb-3">전체 문항 차근차근 풀기</h3>
+            <p className="text-slate-600 text-[15px] mb-6 leading-relaxed">1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하세요.</p>
+            <button onClick={() => onStart('full')} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-[16px]">
+              전체 문항 시작하기 <ArrowRight size={18} />
+            </button>
           </div>
         </div>
       );
+
+      const rightContent = (
+        <div className="flex flex-col justify-center h-full animate-fade-in max-w-md mx-auto py-10">
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+            <h3 className="text-xl font-bold text-slate-900 mb-3">과목별 집중 학습</h3>
+            <p className="text-slate-600 text-[15px] mb-6 leading-relaxed">어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {['물리', '화학', '생명과학', '지구과학'].map(sub => (
+                <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-4 px-2 rounded-xl text-[16px] font-bold transition-all shadow-sm ${selectedSubject === sub ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' : 'bg-slate-50 text-slate-600 border-2 border-slate-100 hover:bg-slate-100'}`}>
+                  {sub}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full bg-slate-800 text-white py-3.5 rounded-xl font-bold hover:bg-slate-900 transition-colors flex items-center justify-center gap-2 text-[16px]">
+              {selectedSubject} 시작하기 <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
+      );
+
+      return <BookLayout leftPage={leftContent} rightPage={rightContent} />;
     };
 
     const SolveView = ({ problem, onSubmit, isSubmitting, onPrev, onNext, isFirst, isLast, currentIndex, totalProblems }) => {
@@ -440,271 +395,227 @@
       useEffect(() => { setAnswer(''); }, [problem.id]);
       const handleSubmit = () => { if (answer) onSubmit(answer); };
 
-      return (
-        <div className="flex flex-col h-full animate-fade-in pb-24 relative w-full max-w-2xl mx-auto p-4">
-          <div className="flex items-center justify-between mb-4 w-full px-2">
-            <button onClick={onPrev} disabled={isFirst} className="flex items-center gap-1 font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-30 transition-colors">
-              <ChevronLeft size={20} /> 이전 문제
-            </button>
-            <span className="font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full text-sm">{currentIndex + 1} / {totalProblems}</span>
-            <button onClick={onNext} disabled={isLast} className="flex items-center gap-1 font-bold text-slate-500 hover:text-indigo-600 disabled:opacity-30 transition-colors">
-              다음 문제 <ChevronRight size={20} />
-            </button>
+      const leftContent = (
+        <div className="flex flex-col h-full animate-fade-in relative">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-2xl text-slate-900">{problem.number}번</h3>
+            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-sm font-bold border border-slate-200">{problem.subject}</span>
           </div>
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-6 flex items-center justify-center p-4 min-h-[400px] relative">
+
+          <div className="flex-1 flex items-start justify-center">
             {problem.imageUrl ? (
-              <img src={problem.imageUrl} alt={`${problem.number}번 문제`} className="w-full max-h-[60vh] object-contain rounded-2xl" />
+              <img src={problem.imageUrl} alt={`${problem.number}번 문제`} className="w-full max-w-full h-auto object-contain" />
             ) : (
               <div className="text-center p-8 text-slate-500">
                 <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="font-bold text-xl">문제 이미지를 불러올 수 없어.</p>
-              </div>
-            )}
-            {isSubmitting && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center z-20 animate-fade-in">
-                <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
-                <h3 className="font-bold text-2xl text-slate-900 mb-2">정답 확인 중!</h3>
-                <p className="text-slate-600 text-lg">선생님이 꼼꼼하게 해설을 준비하고 있어.</p>
+                <p className="font-bold">이미지를 불러올 수 없습니다.</p>
               </div>
             )}
           </div>
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 z-10 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
-            <div className="max-w-2xl mx-auto flex items-center gap-4">
-              <div className="flex-1 bg-white rounded-2xl border-2 border-indigo-100 overflow-hidden flex shadow-sm focus-within:border-indigo-500 transition-colors">
-                <span className="bg-indigo-50 text-indigo-700 font-bold px-5 flex items-center justify-center shrink-0">정답</span>
-                <input type="number" min="1" max="5" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="1~5 입력" disabled={isSubmitting} className="flex-1 p-4 text-xl text-center outline-none font-bold text-slate-800 bg-transparent disabled:opacity-50" />
+        </div>
+      );
+
+      const rightContent = (
+        <div className="flex flex-col h-full animate-fade-in justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+              <span className="font-bold text-slate-400">진행도 {currentIndex + 1} / {totalProblems}</span>
+              <div className="flex gap-2">
+                <button onClick={onPrev} disabled={isFirst} className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-600 transition-colors"><ChevronLeft size={20} /></button>
+                <button onClick={onNext} disabled={isLast} className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-600 transition-colors"><ChevronRight size={20} /></button>
               </div>
-              <button onClick={handleSubmit} disabled={!answer || isSubmitting} className="bg-indigo-600 disabled:bg-slate-300 text-white px-8 py-4 rounded-2xl font-bold transition-all hover:bg-indigo-700 shadow-lg text-lg shrink-0">
-                채점하기
-              </button>
+            </div>
+
+            <div className="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 relative">
+              {isSubmitting ? (
+                <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 rounded-2xl">
+                  <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                  <h3 className="font-bold text-lg text-slate-900">해설 준비 중...</h3>
+                </div>
+              ) : null}
+
+              <h4 className="font-bold text-slate-800 mb-6 text-center text-lg">이 문제의 정답은?</h4>
+              <div className="flex flex-col gap-4">
+                <div className="flex bg-white rounded-xl border-2 border-slate-200 overflow-hidden shadow-sm focus-within:border-indigo-400 transition-colors">
+                  <span className="bg-slate-100 text-slate-600 font-bold px-4 flex items-center justify-center border-r border-slate-200">입력</span>
+                  <input type="number" min="1" max="5" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="1~5 숫자 입력" disabled={isSubmitting} className="flex-1 p-3 text-center outline-none font-bold text-slate-800 text-lg" />
+                </div>
+                <button onClick={handleSubmit} disabled={!answer || isSubmitting} className="w-full bg-indigo-600 disabled:bg-slate-300 text-white py-4 rounded-xl font-bold transition-all hover:bg-indigo-700 text-lg shadow-sm">
+                  채점하고 해설 보기
+                </button>
+              </div>
             </div>
           </div>
         </div>
       );
+
+      return <BookLayout leftPage={leftContent} rightPage={rightContent} headerRight="문제 풀이" />;
     };
 
     const ExplainView = ({ explanation, problem, userAnswer, onConceptClick, onNextProblem, isLastProblem }) => {
-      if (!explanation) return null;
       const isCorrect = parseInt(userAnswer) === problem.correctAnswer;
       const optionsList = Array.isArray(explanation.options) ? explanation.options : [];
       const conceptsList = Array.isArray(explanation.concepts) ? explanation.concepts : [];
-      const safeSubject = cleanTitleStr(explanation.subject || '알 수 없음');
-      const displaySubject = safeSubject.length > 10 ? safeSubject.substring(0, 10) : safeSubject;
-      let conceptTitle = cleanTitleStr(explanation.coreConcept?.title) || '개념 분석';
-      let conceptContent = explanation.coreConcept?.content;
-      if (conceptTitle.length > 30) {
-        if (!conceptContent || conceptContent.trim() === '') conceptContent = conceptTitle;
-        else conceptContent = conceptTitle + '\n\n' + conceptContent;
-        conceptTitle = '개념 분석';
-      }
 
-      return (
-        <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-6xl mx-auto p-4 animate-fade-in pb-12">
-          <div className="w-full lg:w-5/12 lg:sticky lg:top-24 z-10 bg-white p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-            <div className="flex justify-between items-center mb-4 px-2">
-              <span className="bg-slate-800 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">{displaySubject}</span>
-              <span className="font-bold text-slate-500">{problem.number}번</span>
-            </div>
-            <img src={problem.imageUrl} alt={`${problem.number}번 문제`} className="w-full h-auto object-contain rounded-xl max-h-[50vh] lg:max-h-[65vh] bg-slate-50 border border-slate-100" />
+      const leftContent = (
+        <div className="flex flex-col h-full animate-fade-in relative">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-2xl text-slate-900">{problem.number}번</h3>
+            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-sm font-bold border border-slate-200">{problem.subject}</span>
           </div>
-          <div className="w-full lg:w-7/12 flex flex-col gap-8">
-            <div className={`p-6 rounded-3xl flex items-center justify-between border shadow-sm ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-              <div className={`flex items-center gap-4 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                {isCorrect ? <CheckCircle className="w-10 h-10 shrink-0" /> : <RotateCcw className="w-10 h-10 shrink-0" />}
-                <div>
-                  <h2 className="font-bold text-2xl">{isCorrect ? '정답이야! 훌륭해.' : '아쉽네, 오답이야.'}</h2>
-                  <p className="text-[16px] font-medium opacity-80 mt-1">내가 쓴 답: {cleanTitleStr(userAnswer)} / 정답: {problem.correctAnswer}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
-              <img src={TEACHER_ICON} alt="선생님" className="w-14 h-14 rounded-full border-2 border-white shadow-md shrink-0 bg-white object-cover z-10" />
-              <div className="flex-1 mt-1">
-                <h3 className="font-bold text-lg text-indigo-900 mb-2">김수석 선생님의 분석</h3>
-                <FormattedParagraphs text={explanation.intro} className="text-slate-700 text-[17px] font-medium" />
-              </div>
-            </div>
-            {optionsList.length > 0 && (
-              <div className="space-y-4">
-                <div className="grid gap-4">
-                  {optionsList.map((opt, idx) => {
-                    const optDetail = opt?.detail || opt?.explanation || opt?.reason || opt?.desc || opt?.content || opt?.text;
-                    const hasValidDetail = optDetail && optDetail.length > 10;
-                    return (
-                      <div key={idx} className={`p-6 rounded-3xl bg-white transition-colors ${opt?.isCorrect ? 'border-4 border-slate-800 shadow-md' : 'border-2 border-slate-200 shadow-sm'}`}>
-                        <div className="flex items-start gap-3 mb-4">
-                          <span className={`font-bold px-3 py-1.5 rounded-xl text-sm shrink-0 shadow-sm ${opt?.isCorrect ? 'bg-slate-800 text-white' : 'bg-slate-500 text-white'}`}>
-                            {cleanTitleStr(opt?.label)} {opt?.isCorrect ? '(정답)' : '(오답)'}
-                          </span>
-                          <p className="font-bold text-[17px] text-slate-900 whitespace-pre-wrap flex-1 mt-1 leading-relaxed">{renderWithBold(opt?.text)}</p>
-                        </div>
-                        <div className="pl-3 border-l-4 border-slate-200 ml-1 pt-1">
-                          {hasValidDetail ? <FormattedParagraphs text={optDetail} className="text-[17px] text-slate-700" /> : <p className="text-slate-500 italic font-medium">상세 설명이 누락됐네. 그래도 핵심은 파악했을 거야!</p>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {explanation.outro && (
-              <div className="flex items-start gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-blue-400"></div>
-                <img src={TEACHER_ICON} alt="선생님" className="w-14 h-14 rounded-full border-2 border-white shadow-md shrink-0 bg-white object-cover z-10" />
-                <div className="flex-1 mt-1">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1.5 rounded-full mb-3 shadow-sm border border-blue-200">POINT</span>
-                  <FormattedParagraphs text={explanation.outro} className="text-slate-700 text-[17px] font-medium" />
-                </div>
-              </div>
-            )}
-            <hr className="border-t-2 border-slate-200 my-4" />
-            {conceptContent && (
-              <div className="mt-2">
-                <h3 className="font-bold text-xl text-slate-900 mb-3 pl-1">정답 핵심 개념</h3>
-                <div className="bg-indigo-50/70 p-7 rounded-3xl border border-indigo-100 shadow-sm">
-                  <h4 className="font-bold text-indigo-900 text-[19px] mb-4 pb-3 border-b border-indigo-200/60">{conceptTitle}</h4>
-                  <div className="pl-1"><FormattedParagraphs text={conceptContent} className="text-slate-700 text-[17px] font-normal" /></div>
-                </div>
-              </div>
-            )}
-            <div className="mt-8">
-              <div className="flex flex-col items-center mb-8">
-                <div className="flex items-end gap-3 mb-6 animate-bounce-subtle">
-                  <img src={TEACHER_ICON} alt="선생님" className="w-12 h-12 rounded-full border-2 border-slate-200 bg-white shrink-0 shadow-sm object-cover" />
-                  <div className="bg-slate-100 text-slate-700 text-[15px] px-5 py-3.5 rounded-3xl rounded-bl-none shadow-sm relative leading-relaxed font-medium max-w-lg">
-                    또 궁금한 걸 자유롭게 물어봐! 선생님이 답해줄게. 아래 핵심 개념을 클릭해도 돼.
-                    <div className="absolute w-3 h-3 bg-slate-100 bottom-0 -left-1.5 transform skew-x-12"></div>
-                  </div>
-                </div>
-                {conceptsList.length > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-3 w-full px-2 mb-6">
-                    {conceptsList.map((conceptItem, idx) => {
-                      const conceptName = cleanTitleStr(typeof conceptItem === 'object' ? conceptItem.name || JSON.stringify(conceptItem) : conceptItem);
-                      return (
-                        <button key={idx} onClick={() => onConceptClick(conceptName)} className="px-6 py-3 bg-indigo-600 text-white rounded-full text-[16px] font-bold hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md flex items-center gap-2">
-                          <BookOpen size={18} className="shrink-0 text-indigo-200" /> {conceptName}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-lg text-slate-500 py-4 italic font-medium text-center">추가로 볼 개념어는 없어.</div>
-                )}
-                <div className="w-full mt-2"><ChatInput onSubmit={onConceptClick} placeholder="궁금한 게 더 있으면 물어봐!" /></div>
-              </div>
-              <hr className="border-t-2 border-slate-200 mb-6" />
-              <button onClick={onNextProblem} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors shadow-xl text-xl">
-                {isLastProblem ? '결과 확인하기 (총평)' : '완벽히 이해했어! 다음 문제로'} <ChevronRight className="w-7 h-7" />
-              </button>
-            </div>
+          <div className="flex-1">
+            <img src={problem.imageUrl} alt={`${problem.number}번 문제`} className="w-full max-w-full h-auto object-contain" />
           </div>
         </div>
       );
+
+      const rightContent = (
+        <div className="flex flex-col gap-8 animate-fade-in pb-8">
+          {/* 채점 결과 배너 */}
+          <div className={`p-4 rounded-xl flex items-center gap-4 border ${isCorrect ? 'bg-indigo-50/50 border-indigo-100 text-indigo-800' : 'bg-rose-50/50 border-rose-100 text-rose-800'}`}>
+            {isCorrect ? <CheckCircle className="w-8 h-8 shrink-0" /> : <RotateCcw className="w-8 h-8 shrink-0" />}
+            <div>
+              <h2 className="font-bold text-lg">{isCorrect ? '정답이야! 훌륭해.' : '아쉽네, 오답이야.'}</h2>
+              <p className="text-sm font-medium mt-0.5 opacity-80">제출: {cleanTitleStr(userAnswer)} / 정답: {problem.correctAnswer}</p>
+            </div>
+          </div>
+
+          {/* 선생님 인트로 */}
+          <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 relative">
+            <div className="flex items-start gap-3">
+              <img src={TEACHER_ICON} alt="선생님" className="w-10 h-10 rounded-full border border-slate-200 bg-white" />
+              <div className="flex-1">
+                <h3 className="font-bold text-indigo-900 mb-2 text-sm">김수석 선생님</h3>
+                <FormattedParagraphs text={explanation.intro} className="text-slate-700 text-[15px] font-medium leading-relaxed" />
+              </div>
+            </div>
+          </div>
+
+          {/* 선지 분석 */}
+          {optionsList.length > 0 && (
+            <div className="space-y-3">
+              {optionsList.map((opt, idx) => (
+                <div key={idx} className={`p-4 rounded-xl border ${opt?.isCorrect ? 'border-slate-800 bg-slate-50 shadow-sm' : 'border-slate-100 bg-white'}`}>
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className={`font-bold px-2 py-0.5 rounded text-xs shrink-0 ${opt?.isCorrect ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                      {cleanTitleStr(opt?.label)} {opt?.isCorrect ? '(정답)' : ''}
+                    </span>
+                    <p className="font-bold text-[15px] text-slate-900 leading-snug">{renderWithBold(opt?.text)}</p>
+                  </div>
+                  <div className="pl-1 mt-2 text-[14px] text-slate-600">
+                    <FormattedParagraphs text={opt?.detail || opt?.explanation} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 핵심 개념 */}
+          {explanation.coreConcept && explanation.coreConcept.content && (
+            <div className="border-t border-slate-200 pt-6">
+              <h4 className="font-bold text-slate-900 mb-3 text-lg flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-yellow-500" />
+                {cleanTitleStr(explanation.coreConcept.title)}
+              </h4>
+              <div className="text-slate-700 text-[15px] leading-relaxed bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">
+                <FormattedParagraphs text={explanation.coreConcept.content} />
+              </div>
+            </div>
+          )}
+
+          {/* 하단 네비게이션 및 개념 연결 */}
+          <div className="border-t border-slate-200 pt-6 mt-4">
+            <p className="text-sm font-bold text-slate-500 mb-3 text-center">모르는 개념이 있다면 눌러봐!</p>
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {conceptsList.map((c, idx) => {
+                const cName = cleanTitleStr(typeof c === 'object' ? c.name : c);
+                return (
+                  <button key={idx} onClick={() => onConceptClick(cName)} className="px-4 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 rounded-lg text-sm font-bold transition-colors border border-slate-200">
+                    {cName}
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={onNextProblem} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+              {isLastProblem ? '결과 확인하기' : '다음 문제로'} <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      );
+
+      return <BookLayout leftPage={leftContent} rightPage={rightContent} headerLeft={`문항 번호 ${problem.number}`} headerRight="해설 및 분석" />;
     };
 
     const ConceptView = ({ concept, originalConcepts, newConcepts, returnText, onNextConcept, onNextProblem }) => {
-      if (!concept) return null;
-      let defSummary = cleanTextStr(concept?.definition?.summary) || '개념 요약';
-      let defDetail = concept?.definition?.detail;
-      if (defSummary.length > 60) {
-        if (!defDetail || defDetail.trim() === '') defDetail = defSummary;
-        else defDetail = defSummary + '\n\n' + defDetail;
-        defSummary = "자, 이 개념을 정리해 줄게.";
-      }
-      let storyTitle = cleanTitleStr(concept?.analogyAndStory?.title) || '비유로 쉽게 이해하기';
-      let storyContent = concept?.analogyAndStory?.content;
-      if (storyTitle.length > 40) {
-        if (!storyContent || storyContent.trim() === '') storyContent = storyTitle;
-        else storyContent = storyTitle + '\n\n' + storyContent;
-        storyTitle = '비유로 쉽게 이해하기';
-      }
-      const etymology = concept.etymology || {};
-      const hasHanja = etymology.hasHanja && etymology.hanjaTerm && etymology.hanjaTerm.trim() !== '';
-      const hasLoanword = etymology.hasLoanword && etymology.loanwordTerm && etymology.loanwordTerm.trim() !== '';
+      const etymology = concept?.etymology || {};
+      const hasHanja = etymology.hasHanja && etymology.hanjaTerm;
+      const hasLoanword = etymology.hasLoanword && etymology.loanwordTerm;
 
-      return (
-        <div className="flex flex-col gap-8 animate-fade-in w-full max-w-3xl mx-auto p-4 pb-12">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-indigo-500 flex items-start gap-4 relative overflow-hidden">
-            <img src={TEACHER_ICON} alt="선생님" className="w-16 h-16 rounded-full bg-white object-cover border-2 border-slate-200 shadow-md z-10" />
-            <div className="flex-1 z-10">
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">'{cleanTitleStr(concept.title)}' 파헤치기</h2>
-              <p className="text-slate-600 text-[17px] font-medium leading-relaxed">이 개념이 궁금했구나! 어떤 뜻인지 선생님이 쉽게 설명해 줄게.</p>
-            </div>
-          </div>
+      const leftContent = (
+        <div className="flex flex-col gap-6 animate-fade-in pb-8">
+          <h2 className="text-3xl font-bold text-slate-900 border-b-2 border-slate-800 pb-4 inline-block">
+            {cleanTitleStr(concept.title)}
+          </h2>
+
           {(hasHanja || hasLoanword) && (
-            <section className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100">
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-5 text-slate-800"><Globe className="w-6 h-6 text-indigo-500" /> 어원 분석</h3>
-              <div className="flex flex-col gap-5">
-                {hasHanja && (
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-left">
-                    <div className="inline-block text-sm font-bold text-slate-500 mb-4 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">한자어 풀이</div>
-                    <div className="font-bold text-slate-900 mb-4 text-4xl font-serif tracking-widest">{cleanTitleStr(etymology.hanjaTerm)}</div>
-                    <div className="border-t border-slate-200 pt-4"><FormattedParagraphs text={etymology.hanjaMeaning} className="text-[17px] text-slate-700 font-medium" /></div>
-                  </div>
-                )}
-                {hasLoanword && (
-                  <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 text-left">
-                    <div className="inline-block text-sm font-bold text-indigo-600 mb-4 bg-white px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm">영어·외래어 어원 풀이</div>
-                    <div className="font-bold text-indigo-900 mb-4 text-3xl tracking-wide">{cleanTitleStr(etymology.loanwordTerm)}</div>
-                    <div className="border-t border-indigo-200/60 pt-4"><FormattedParagraphs text={etymology.loanwordMeaning} className="text-[17px] text-indigo-900/80 font-medium" /></div>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-          <section className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100">
-            <h3 className="text-xl font-bold flex items-center gap-2 mb-5 text-slate-800"><BookOpen className="w-6 h-6 text-indigo-500" /> 개념 정의</h3>
-            <div className="space-y-6">
-              <p className="font-bold text-[18px] text-indigo-900 bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 leading-relaxed">{renderWithBold(defSummary)}</p>
-              <div className="pl-3 border-l-4 border-indigo-300"><FormattedParagraphs text={defDetail} className="text-[17px] text-slate-700" /></div>
+            <div className="mt-2 space-y-4">
+              <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2"><Globe size={18} /> 어원 분석</h3>
+              {hasHanja && (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="font-serif text-2xl tracking-widest text-slate-800 mb-2">{cleanTitleStr(etymology.hanjaTerm)}</div>
+                  <FormattedParagraphs text={etymology.hanjaMeaning} className="text-[15px] text-slate-600" />
+                </div>
+              )}
+              {hasLoanword && (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="font-serif text-xl tracking-wide text-indigo-900 mb-2">{cleanTitleStr(etymology.loanwordTerm)}</div>
+                  <FormattedParagraphs text={etymology.loanwordMeaning} className="text-[15px] text-slate-600" />
+                </div>
+              )}
             </div>
-          </section>
-          {storyContent && (
-            <section className="bg-orange-50/80 p-8 rounded-3xl shadow-sm border border-orange-200">
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-6 text-orange-900"><Sparkles className="w-6 h-6 text-orange-500" /> 비유와 스토리로 쉽게 이해하기</h3>
-              <div className="space-y-5">
-                <h4 className="font-bold text-orange-950 text-[20px] border-b border-orange-200 pb-3">{storyTitle}</h4>
-                <div className="pl-3 border-l-4 border-orange-300"><FormattedParagraphs text={storyContent} className="text-[17px] text-orange-950/80" /></div>
-              </div>
-            </section>
           )}
-          <div className="mt-8">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center">
-                {(originalConcepts.length > 0 || newConcepts.length > 0) && (
-                  <>
-                    <p className="text-lg text-slate-600 font-bold mb-4 flex items-center gap-2"><ArrowRight className="w-5 h-5 text-indigo-500" /> 이어서 볼 관련 개념</p>
-                    {originalConcepts.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-3 w-full px-2 mb-4">
-                        {originalConcepts.map((cName, idx) => (
-                          <button key={`orig-${idx}`} onClick={() => onNextConcept(cName)} className="px-5 py-2.5 bg-indigo-600 text-white rounded-full text-[16px] font-bold hover:bg-indigo-700 hover:-translate-y-0.5 transition-all shadow-md flex items-center justify-center gap-2">
-                            <BookOpen size={18} className="shrink-0 text-indigo-200" /> {cName}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {newConcepts.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-3 w-full px-2 mt-2 mb-6">
-                        {newConcepts.map((cName, idx) => (
-                          <button key={`new-${idx}`} onClick={() => onNextConcept(cName)} className="px-5 py-2 border-2 border-indigo-200 text-indigo-700 rounded-full text-[15px] font-bold bg-white hover:bg-indigo-50 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                            <Lightbulb size={18} className="shrink-0 text-yellow-500" /> {cName}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-                <div className="w-full mt-4"><ChatInput onSubmit={onNextConcept} placeholder="궁금한 게 더 있으면 물어봐!" /></div>
-              </div>
-              <hr className="border-t-2 border-slate-200 my-2" />
-              <button onClick={onNextProblem} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold hover:bg-slate-800 shadow-xl flex items-center justify-center gap-3 transition-colors text-xl">
-                {returnText} <ChevronRight className="w-7 h-7" />
-              </button>
+
+          <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-500 flex items-center gap-2 mb-3"><BookOpen size={18} /> 개념 정의</h3>
+            <p className="font-bold text-[16px] text-indigo-900 bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-4">{renderWithBold(cleanTextStr(concept?.definition?.summary))}</p>
+            <div className="text-[15px] text-slate-700 pl-2 border-l-2 border-slate-300">
+              <FormattedParagraphs text={concept?.definition?.detail} />
             </div>
           </div>
         </div>
       );
+
+      const rightContent = (
+        <div className="flex flex-col gap-6 animate-fade-in h-full justify-between pb-8">
+          <div>
+            {concept?.analogyAndStory?.content && (
+              <div className="bg-orange-50/50 p-6 rounded-xl border border-orange-100 mb-8">
+                <h3 className="text-lg font-bold text-orange-900 mb-3 flex items-center gap-2"><Sparkles size={18} /> 비유로 이해하기</h3>
+                <h4 className="font-bold text-slate-800 mb-2">{cleanTitleStr(concept.analogyAndStory.title)}</h4>
+                <FormattedParagraphs text={concept.analogyAndStory.content} className="text-[15px] text-slate-700 leading-relaxed" />
+              </div>
+            )}
+
+            <div className="border-t border-slate-200 pt-6">
+              <p className="font-bold text-slate-500 mb-4 text-sm text-center">궁금한 게 더 있다면 질문하거나 관련 개념을 눌러봐.</p>
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
+                {[...originalConcepts, ...newConcepts].map((cName, idx) => (
+                  <button key={idx} onClick={() => onNextConcept(cName)} className="px-3 py-1.5 bg-white border border-slate-300 hover:border-indigo-500 hover:text-indigo-700 text-slate-600 rounded-lg text-sm font-bold transition-colors shadow-sm">
+                    {cName}
+                  </button>
+                ))}
+              </div>
+              <ChatInput onSubmit={onNextConcept} placeholder="질문 입력하기" />
+            </div>
+          </div>
+
+          <button onClick={onNextProblem} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-8">
+            {returnText} <ChevronRight size={18} />
+          </button>
+        </div>
+      );
+
+      return <BookLayout leftPage={leftContent} rightPage={rightContent} headerLeft="개념 사전" headerRight="심화 학습" />;
     };
 
     const SummaryView = ({ sessionData, explanations, summaryFeedback, isGeneratingSummary, onReviewIncorrect, onConceptClick, onGoHome }) => {
@@ -716,88 +627,69 @@
       });
       const correctCount = total - incorrectProblemIds.length;
       const score = Math.round((correctCount / total) * 100);
-      const reviewConceptsRaw = incorrectProblemIds.flatMap(id => explanations[id]?.concepts || []);
-      const reviewConcepts = Array.from(new Set(reviewConceptsRaw.map(extractString).map(cleanTitleStr))).filter(Boolean);
 
-      return (
-        <div className="flex flex-col gap-6 py-8 animate-fade-in w-full max-w-2xl mx-auto p-4">
-          <div className="bg-white p-8 rounded-3xl shadow-md border-t-8 border-indigo-600 text-center">
-            <Target size={60} className="mx-auto text-indigo-500 mb-4" />
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">학습 총평</h2>
-            <p className="text-slate-600 text-lg mb-6">수고했어! 방금 푼 세션의 결과를 확인해 보자.</p>
-            <div className="flex justify-center items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-              <div className="text-center">
-                <div className="text-4xl font-black text-slate-800">{correctCount}<span className="text-xl text-slate-400">/{total}</span></div>
-                <div className="text-sm font-bold text-slate-500 mt-1">맞춘 문제</div>
+      const leftContent = (
+        <div className="flex flex-col h-full animate-fade-in justify-center items-center py-10">
+          <Target size={48} className="text-indigo-500 mb-4" />
+          <h2 className="text-3xl font-bold text-slate-900 mb-8">학습 총평</h2>
+
+          <div className="flex justify-center items-center gap-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm w-full max-w-sm">
+            <div className="text-center">
+              <div className="text-3xl font-black text-slate-800">{correctCount}<span className="text-lg text-slate-400">/{total}</span></div>
+              <div className="text-sm font-bold text-slate-500 mt-2">정답 수</div>
+            </div>
+            <div className="h-12 w-px bg-slate-200"></div>
+            <div className="text-center">
+              <div className={`text-3xl font-black ${score >= 80 ? 'text-indigo-600' : score >= 50 ? 'text-yellow-600' : 'text-rose-600'}`}>
+                {score}<span className="text-lg">점</span>
               </div>
-              <div className="h-16 w-px bg-slate-300"></div>
-              <div className="text-center">
-                <div className={`text-4xl font-black ${score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
-                  {score}<span className="text-xl">점</span>
-                </div>
-                <div className="text-sm font-bold text-slate-500 mt-1">정답률</div>
-              </div>
+              <div className="text-sm font-bold text-slate-500 mt-2">달성률</div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
+        </div>
+      );
+
+      const rightContent = (
+        <div className="flex flex-col gap-6 animate-fade-in pb-8">
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative">
             <div className="flex items-start gap-4">
-              <img src={TEACHER_ICON} alt="선생님" className="w-14 h-14 rounded-full border-2 border-white shadow-md shrink-0 bg-white object-cover z-10" />
+              <img src={TEACHER_ICON} alt="선생님" className="w-12 h-12 rounded-full border border-slate-200 bg-white shadow-sm" />
               <div className="flex-1 mt-1">
-                <h3 className="font-bold text-lg text-indigo-900 mb-3">김수석 선생님의 맞춤 피드백</h3>
+                <h3 className="font-bold text-indigo-900 mb-2">김수석 선생님의 피드백</h3>
                 {isGeneratingSummary ? (
-                  <div className="flex flex-col items-center py-4">
-                    <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" />
-                    <p className="text-sm text-slate-500 font-medium">네 결과를 분석해서 피드백을 작성하고 있어...</p>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" /> 분석 작성 중...
                   </div>
                 ) : summaryFeedback ? (
-                  <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
-                    <h4 className="font-bold text-indigo-800 mb-3 text-[17px]">{cleanTitleStr(summaryFeedback.title)}</h4>
-                    <FormattedParagraphs text={summaryFeedback.content} className="text-slate-700 text-[16px] font-medium" />
+                  <div>
+                    <h4 className="font-bold text-slate-800 mb-2 text-[15px]">{cleanTitleStr(summaryFeedback.title)}</h4>
+                    <FormattedParagraphs text={summaryFeedback.content} className="text-slate-700 text-[14px] leading-relaxed" />
                   </div>
-                ) : (
-                  <p className="text-slate-500 italic">총평을 불러올 수 없어.</p>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
-          {incorrectProblemIds.length > 0 ? (
-            <>
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-slate-900"><RotateCcw className="text-red-500" /> 오답 노트 (틀린 문제 다시 풀기)</h3>
-                <p className="text-slate-600 text-[15px] mb-4">틀린 문제를 다시 한번 풀어보면 실력이 확실히 늘 거야.</p>
-                <button onClick={() => onReviewIncorrect(incorrectProblemIds)} className="w-full bg-red-50 text-red-600 border-2 border-red-200 py-4 rounded-2xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2 text-lg">
-                  <RefreshCw size={20} /> 틀린 문제만 다시 풀기
-                </button>
-              </div>
-              {reviewConcepts.length > 0 && (
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                  <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-slate-900"><Brain className="text-indigo-500" /> 오답 기반 맞춤 개념 추천</h3>
-                  <p className="text-slate-600 text-[15px] mb-4 leading-relaxed">네가 틀렸던 문제들에 나왔던 핵심 개념들이야. 이것만 확실히 잡고 가도 다음엔 안 틀릴 거야! 클릭해서 바로 복습해 봐.</p>
-                  <div className="flex flex-wrap gap-2">
-                    {reviewConcepts.map((cName, idx) => (
-                      <button key={idx} onClick={() => onConceptClick(cleanTitleStr(cName))} className="px-5 py-2.5 bg-indigo-600 text-white rounded-full text-[15px] font-bold hover:bg-indigo-700 hover:-translate-y-0.5 transition-all shadow-md flex items-center gap-2">
-                        <BookOpen size={16} className="text-indigo-200" /> {cleanTitleStr(cName)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="bg-green-50 p-8 rounded-3xl border border-green-200 text-center">
-              <Sparkles size={48} className="mx-auto text-green-500 mb-3" />
-              <h3 className="text-2xl font-bold text-green-800 mb-2">백점 만점! 완벽해!</h3>
-              <p className="text-green-700 font-medium">틀린 문제가 하나도 없어. 정말 대단한걸?</p>
+
+          {incorrectProblemIds.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm">
+              <h3 className="text-lg font-bold flex items-center gap-2 mb-3 text-slate-900"><RotateCcw size={18} className="text-rose-500" /> 오답 노트</h3>
+              <p className="text-slate-600 text-[14px] mb-4">틀린 문제를 다시 풀어보며 약점을 보완하세요.</p>
+              <button onClick={() => onReviewIncorrect(incorrectProblemIds)} className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-3 rounded-xl font-bold transition-colors border border-rose-200 flex items-center justify-center gap-2">
+                <RefreshCw size={16} /> 틀린 문제만 다시 풀기
+              </button>
             </div>
           )}
-          <button onClick={onGoHome} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors shadow-xl text-xl mt-4">
-            홈으로 돌아가기
+
+          <button onClick={onGoHome} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm mt-auto">
+            처음으로 돌아가기
           </button>
         </div>
       );
+
+      return <BookLayout leftPage={leftContent} rightPage={rightContent} headerLeft="결과 확인" headerRight="학습 리포트" onGoHome={onGoHome} />;
     };
 
+    // --- MAIN APP ---
     function App() {
       const [appState, setAppState] = useState('HOME');
       const [sessionData, setSessionData] = useState({ mode: null, queue: [], currentIndex: 0, answers: {} });
@@ -809,8 +701,6 @@
       const [isWaitingForExplanation, setIsWaitingForExplanation] = useState(false);
       const prefetchRef = useRef({});
       const [viewingConceptName, setViewingConceptName] = useState(null);
-
-      useEffect(() => { window.scrollTo(0, 0); }, [appState, sessionData.currentIndex, viewingConceptName]);
 
       const handleGoHome = () => {
         setAppState('HOME'); setSessionData({ mode: null, queue: [], currentIndex: 0, answers: {} });
@@ -891,7 +781,7 @@
       const applyFallbackAndGo = (pId) => {
         const fallbackResult = {
           correctAnswer: currentProblem?.correctAnswer || 1, subject: "오류",
-          intro: "선생님이 해설을 준비하다가 네트워크가 끊겼나 봐.\n\n새로고침을 하거나 잠시 후 다시 시도해 줘.",
+          intro: "선생님이 해설을 준비하다가 오류가 났어. 다시 시도해 줘.",
           coreConcept: { title: "분석 실패", content: "데이터를 불러오지 못했어." }, options: [],
           outro: "기다리게 해서 미안해.", concepts: []
         };
@@ -942,32 +832,23 @@
       const safeViewingName = cleanTitleStr(viewingConceptName || '');
       const originalConcepts = (currentExplanation?.concepts || []).map(extractString).map(cleanTitleStr).filter(c => c && c !== safeViewingName);
       const newConcepts = (generatedConcepts[viewingConceptName]?.relatedConcepts || []).map(extractString).map(cleanTitleStr).filter(c => c && c !== safeViewingName && !originalConcepts.includes(c));
-      const getHeaderTitle = () => {
-        if (appState === 'HOME') return '';
-        if (appState === 'SUMMARY') return '학습 총평';
-        let prefix = '';
-        if (sessionData.mode === 'subject' && currentProblem) prefix = `[${currentProblem.subject}] `;
-        if (sessionData.mode === 'review') prefix = `[오답 복습] `;
-        return `${prefix}${currentProblem?.number}번`;
-      };
       const isSessionComplete = sessionData.currentIndex >= sessionData.queue.length - 1 && Object.keys(sessionData.answers).length === sessionData.queue.length;
-      const conceptReturnText = isSessionComplete ? '이제 확실히 알겠어! 다음으로' : '이제 확실히 알겠어! 문제 풀이로 복귀';
+      const conceptReturnText = isSessionComplete ? '이제 확실히 알겠어! 결과 보기' : '이제 확실히 알겠어! 문제로 복귀';
 
       return (
-        <Container title={getHeaderTitle()} onGoHome={handleGoHome}>
+        <React.Fragment>
           {appState === 'HOME' && <HomeView onStart={startSession} />}
           {appState === 'SOLVE' && currentProblem && <SolveView problem={currentProblem} isSubmitting={isWaitingForExplanation} onSubmit={handleSubmitAnswer} onPrev={handlePrevProblem} onNext={handleNextProblem} isFirst={sessionData.currentIndex === 0} isLast={sessionData.currentIndex === sessionData.queue.length - 1} currentIndex={sessionData.currentIndex} totalProblems={sessionData.queue.length} />}
           {appState === 'EXPLAIN' && currentProblem && currentExplanation && <ExplainView explanation={currentExplanation} problem={currentProblem} userAnswer={sessionData.answers[currentProblem.id]} onConceptClick={handleConceptClick} onNextProblem={handleNextProblem} isLastProblem={sessionData.currentIndex === sessionData.queue.length - 1} />}
           {appState === 'LOADING_CONCEPT' && (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center animate-fade-in">
-              <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-6" />
-              <p className="font-bold text-2xl text-slate-900">선생님이 핵심을 정리하고 있어!</p>
-              <p className="text-slate-600 text-lg mt-2">잠시만 기다려 줘...</p>
-            </div>
+            <BookLayout
+              leftPage={<div className="flex flex-col items-center justify-center h-full"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" /><p className="font-bold text-lg text-slate-800">개념 정리 중...</p></div>}
+              rightPage={<div className="flex flex-col items-center justify-center h-full opacity-50"><p className="text-slate-500 font-medium">잠시만 기다려주세요.</p></div>}
+            />
           )}
-          {appState === 'CONCEPT' && viewingConceptName && generatedConcepts[viewingConceptName] && <ConceptView concept={generatedConcepts[viewingConceptName]} originalConcepts={originalConcepts} newConcepts={newConcepts} returnText={conceptReturnText} onNextConcept={handleConceptClick} onNextProblem={() => { if (isSessionComplete) setAppState('SUMMARY'); else handleNextProblem(); }} />}
+          {appState === 'CONCEPT' && viewingConceptName && generatedConcepts[viewingConceptName] && <ConceptView concept={generatedConcepts[viewingConceptName]} originalConcepts={originalConcepts} newConcepts={newConcepts} returnText={conceptReturnText} onNextConcept={handleConceptClick} onNextProblem={() => { if (isSessionComplete) setAppState('SUMMARY'); else setAppState('EXPLAIN'); }} />}
           {appState === 'SUMMARY' && <SummaryView sessionData={sessionData} explanations={generatedExplanations} summaryFeedback={summaryFeedback} isGeneratingSummary={isGeneratingSummary} onReviewIncorrect={startReviewSession} onConceptClick={handleConceptClick} onGoHome={handleGoHome} />}
-        </Container>
+        </React.Fragment>
       );
     }
 
