@@ -20,9 +20,9 @@
           colors: {
             paper: '#f8f3e8',
             'paper-edge': '#e8dfc8',
-            ink: '#2a2018',
-            'ink-light': '#6b5d4a',
-            'ink-faint': '#a0927c',
+            ink: '#1a1510',
+            'ink-light': '#3d3225',
+            'ink-faint': '#8a7c6a',
             accent: '#3d7a4a',
             'accent-warm': '#4a9e5c',
             cover: '#1e3a28',
@@ -55,16 +55,22 @@
       box-sizing: border-box;
     }
 
-    html {
+    html,
+    body {
+      height: 100%;
       -webkit-font-smoothing: antialiased;
+      overflow: hidden;
     }
 
     body {
       background: #5a6e5f;
       background-image: radial-gradient(ellipse at 40% 30%, #6e8a72 0%, #4a6050 60%, #3a4e40 100%);
-      min-height: 100dvh;
       font-family: 'Gowun Batang', 'Batang', 'Georgia', serif;
-      color: #2a2018;
+      color: #1a1510;
+    }
+
+    #root {
+      height: 100%;
     }
 
     .font-sans-kr {
@@ -126,7 +132,7 @@
       background: rgba(30, 24, 15, .1);
     }
 
-    /* Page edge (stacked paper) */
+    /* Page edge */
     .book-edge-right {
       background: repeating-linear-gradient(180deg, #f8f3e8 0px, #f8f3e8 1px, #e8dfc8 1px, #e8dfc8 2px);
     }
@@ -163,12 +169,6 @@
       background: rgba(74, 158, 92, .10);
     }
 
-    /* Input lines */
-    .input-answer {
-      background-image: repeating-linear-gradient(transparent, transparent 23px, rgba(44, 36, 22, .08) 23px, rgba(44, 36, 22, .08) 24px);
-      background-size: 100% 24px;
-    }
-
     /* Header line */
     .header-line {
       background: linear-gradient(90deg, transparent, #a0927c, transparent);
@@ -196,13 +196,9 @@
     import { createRoot } from 'react-dom/client';
     import { BookOpen, CheckCircle, ChevronRight, ChevronLeft, ArrowRight, RotateCcw, Brain, Globe, Loader2, AlertCircle, Sparkles, Lightbulb, Target, RefreshCw, Home, Send } from 'lucide-react';
 
-    // --- API CONFIG ---
     const WORKER_URL = "https://science-exam.kimsoosuk1.workers.dev/";
-
-    // --- CUSTOM ASSETS ---
     const TEACHER_ICON = "https://res.cloudinary.com/dms5vyofw/image/upload/v1766382489/%E1%84%80%E1%85%B5%E1%86%B7%E1%84%89%E1%85%AE%E1%84%89%E1%85%A5%E1%86%A8%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%B5%E1%84%8F%E1%85%A9%E1%86%AB_%E1%84%85%E1%85%A1%E1%84%8B%E1%85%B5%E1%86%AB_%E1%84%8F%E1%85%A5%E1%86%AF%E1%84%85%E1%85%A51_snx7la.png";
 
-    // --- MOCK DATA ---
     const MOCK_IMAGE_URLS = [
       "https://res.cloudinary.com/dms5vyofw/image/upload/v1771816925/2025_%E1%84%80%E1%85%A91_3%E1%84%86%E1%85%A9_%E1%84%80%E1%85%AA%E1%84%92%E1%85%A1%E1%86%A8_01_nmij9y.png",
       "https://res.cloudinary.com/dms5vyofw/image/upload/v1771816925/2025_%E1%84%80%E1%85%A91_3%E1%84%86%E1%85%A9_%E1%84%80%E1%85%AA%E1%84%92%E1%85%A1%E1%86%A8_02_krzmpb.png",
@@ -226,48 +222,17 @@
       "https://res.cloudinary.com/dms5vyofw/image/upload/v1771816953/2025_%E1%84%80%E1%85%A91_3%E1%84%86%E1%85%A9_%E1%84%80%E1%85%AA%E1%84%92%E1%85%A1%E1%86%A8_20_mqrqwc.png"
     ];
 
-    const SUBJECT_MAPPING = [
-      '지구과학', '지구과학', '생명과학', '화학',
-      '생명과학', '물리', '화학', '생명과학',
-      '물리', '지구과학', '생명과학', '지구과학',
-      '물리', '물리', '생명과학', '지구과학',
-      '물리', '생명과학', '화학', '지구과학'
-    ];
-
-    const CORRECT_ANSWERS = [
-      4, 4, 3, 4, 5,
-      5, 4, 5, 2, 1,
-      3, 2, 1, 1, 3,
-      3, 2, 2, 3, 5
-    ];
+    const SUBJECT_MAPPING = ['지구과학', '지구과학', '생명과학', '화학', '생명과학', '물리', '화학', '생명과학', '물리', '지구과학', '생명과학', '지구과학', '물리', '물리', '생명과학', '지구과학', '물리', '생명과학', '화학', '지구과학'];
+    const CORRECT_ANSWERS = [4, 4, 3, 4, 5, 5, 4, 5, 2, 1, 3, 2, 1, 1, 3, 3, 2, 2, 3, 5];
 
     const INITIAL_PROBLEMS = MOCK_IMAGE_URLS.map((url, index) => ({
-      id: `p${index + 1}`,
-      number: index + 1,
-      subject: SUBJECT_MAPPING[index],
-      imageUrl: url,
-      correctAnswer: CORRECT_ANSWERS[index]
+      id: `p${index + 1}`, number: index + 1, subject: SUBJECT_MAPPING[index], imageUrl: url, correctAnswer: CORRECT_ANSWERS[index]
     }));
 
     // --- UTILS ---
-    const extractString = (val) => {
-      if (!val) return '';
-      if (typeof val === 'string') return val;
-      if (typeof val === 'object') return val.name || val.term || val.title || JSON.stringify(val);
-      return String(val);
-    };
-
-    const cleanTextStr = (val) => {
-      let str = extractString(val);
-      str = str.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{1FAB0}-\u{1FABF}\u{1FAC0}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-      str = str.replace(/#/g, '');
-      return str.trim();
-    };
-
-    const cleanTitleStr = (val) => {
-      let str = cleanTextStr(val);
-      return str.replace(/\*/g, '').replace(/_/g, '');
-    };
+    const extractString = (val) => { if (!val) return ''; if (typeof val === 'string') return val; if (typeof val === 'object') return val.name || val.term || val.title || JSON.stringify(val); return String(val); };
+    const cleanTextStr = (val) => { let str = extractString(val); str = str.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{1FAB0}-\u{1FABF}\u{1FAC0}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, ''); str = str.replace(/#/g, ''); return str.trim(); };
+    const cleanTitleStr = (val) => { let str = cleanTextStr(val); return str.replace(/\*/g, '').replace(/_/g, ''); };
 
     const renderWithBold = (text) => {
       if (!text) return null;
@@ -275,7 +240,7 @@
       const parts = str.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i} className="text-cover font-bold" style={{ background: 'linear-gradient(180deg, transparent 58%, rgba(74,158,92,.18) 58%)', padding: '0 2px' }}>{part.slice(2, -2)}</strong>;
+          return <strong key={i} className="font-bold" style={{ color: '#1e3a28', background: 'linear-gradient(180deg, transparent 58%, rgba(74,158,92,.18) 58%)', padding: '0 2px' }}>{part.slice(2, -2)}</strong>;
         }
         return <span key={i}>{part}</span>;
       });
@@ -290,49 +255,58 @@
       return (
         <div className={`space-y-3 ${className}`}>
           {paragraphs.map((p, i) => (
-            <p key={i} className="leading-relaxed whitespace-pre-wrap" style={{ textAlign: 'justify', wordBreak: 'keep-all' }}>{renderWithBold(p.trim())}</p>
+            <p key={i} className="leading-[1.85] whitespace-pre-wrap" style={{ textAlign: 'justify', wordBreak: 'keep-all' }}>{renderWithBold(p.trim())}</p>
           ))}
         </div>
       );
     };
 
-    const imageUrlToBase64 = async (url) => {
-      try {
-        const response = await fetch(url, { mode: 'cors' });
-        const blob = await response.blob();
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) { console.error("Image load failed:", error); return null; }
-    };
+    const imageUrlToBase64 = async (url) => { try { const response = await fetch(url, { mode: 'cors' }); const blob = await response.blob(); return new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result.split(',')[1]); reader.readAsDataURL(blob); }); } catch (error) { return null; } };
 
     const callGeminiAPI = async (prompt, systemInstruction, imageBase64 = null, responseSchema = null) => {
       const parts = [{ text: prompt }];
       if (imageBase64) { parts.push({ inlineData: { mimeType: "image/png", data: imageBase64 } }); }
       const payload = { contents: [{ parts }], systemInstruction: { parts: [{ text: systemInstruction }] }, generationConfig: {} };
       if (responseSchema) { payload.generationConfig.responseMimeType = "application/json"; payload.generationConfig.responseSchema = responseSchema; }
-      let attempt = 0;
-      const delays = [1000, 2000, 4000, 8000];
+      let attempt = 0; const delays = [1000, 2000, 4000, 8000];
       while (attempt < 4) {
         try {
           const response = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           if (!response.ok) throw new Error(`API Error: ${response.status}`);
           const data = await response.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (responseSchema) {
-            try { let cleanText = text.trim(); if (cleanText.startsWith('```')) { cleanText = cleanText.replace(/^```json\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, ''); } return JSON.parse(cleanText.trim()); }
-            catch (parseError) { throw new Error("Invalid JSON format from AI"); }
-          }
+          if (responseSchema) { try { let cleanText = text.trim(); if (cleanText.startsWith('```')) { cleanText = cleanText.replace(/^```json\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, ''); } return JSON.parse(cleanText.trim()); } catch { throw new Error("Invalid JSON"); } }
           return text;
         } catch (error) { attempt++; if (attempt >= 4) throw error; await new Promise(r => setTimeout(r, delays[attempt - 1])); }
       }
     };
 
-    // --- PROMPTS ---
+    // --- SCHEMAS ---
     const EXPLANATION_SCHEMA = { type: "OBJECT", properties: { correctAnswer: { type: "INTEGER" }, subject: { type: "STRING" }, intro: { type: "STRING" }, coreConcept: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] }, options: { type: "ARRAY", items: { type: "OBJECT", properties: { label: { type: "STRING" }, text: { type: "STRING" }, isCorrect: { type: "BOOLEAN" }, detail: { type: "STRING" } }, required: ["label", "text", "isCorrect", "detail"] } }, outro: { type: "STRING" }, concepts: { type: "ARRAY", items: { type: "STRING" } } }, required: ["correctAnswer", "subject", "intro", "coreConcept", "options", "concepts"] };
-    const CONCEPT_SCHEMA = { type: "OBJECT", properties: { title: { type: "STRING" }, etymology: { type: "OBJECT", properties: { hasHanja: { type: "BOOLEAN" }, hanjaTerm: { type: "STRING" }, hanjaMeaning: { type: "STRING" }, hasLoanword: { type: "BOOLEAN" }, loanwordTerm: { type: "STRING" }, loanwordMeaning: { type: "STRING" } }, required: ["hasHanja", "hanjaTerm", "hanjaMeaning", "hasLoanword", "loanwordTerm", "loanwordMeaning"] }, definition: { type: "OBJECT", properties: { summary: { type: "STRING" }, detail: { type: "STRING" } }, required: ["summary", "detail"] }, analogyAndStory: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] }, relatedConcepts: { type: "ARRAY", items: { type: "STRING" } } }, required: ["title", "etymology", "definition", "analogyAndStory", "relatedConcepts"] };
+
+    const CONCEPT_SCHEMA = {
+      type: "OBJECT",
+      properties: {
+        title: { type: "STRING" },
+        etymology: {
+          type: "OBJECT",
+          properties: {
+            hasHanja: { type: "BOOLEAN" },
+            hanjaChars: { type: "ARRAY", items: { type: "OBJECT", properties: { char: { type: "STRING" }, meaning: { type: "STRING" }, reading: { type: "STRING" } }, required: ["char", "meaning", "reading"] } },
+            hanjaSummary: { type: "STRING" },
+            hasLoanword: { type: "BOOLEAN" },
+            loanwordTerm: { type: "STRING" },
+            loanwordMeaning: { type: "STRING" }
+          },
+          required: ["hasHanja", "hanjaChars", "hanjaSummary", "hasLoanword", "loanwordTerm", "loanwordMeaning"]
+        },
+        definition: { type: "OBJECT", properties: { summary: { type: "STRING" }, detail: { type: "STRING" } }, required: ["summary", "detail"] },
+        analogyAndStory: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] },
+        relatedConcepts: { type: "ARRAY", items: { type: "STRING" } }
+      },
+      required: ["title", "etymology", "definition", "analogyAndStory", "relatedConcepts"]
+    };
+
     const SUMMARY_SCHEMA = { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] };
 
     const EXPLANATION_FEW_SHOT = `당신은 똑똑하고 다정하며 논리적인 1타 과학 선생님이야. 주어진 문제 이미지를 분석하고 하드코딩된 정답을 기반으로 아래 JSON 포맷으로 해설을 작성해.
@@ -341,19 +315,29 @@
 2. 이모지 금지. **단어** 형식 강조만 허용.
 3. title 필드 마크다운 금지.
 4. 단락 구분 '\\n\\n' 필수.
+[중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.
 5. [매우 중요] 문제에 보기(ㄱ, ㄴ, ㄷ 또는 가, 나, 다 등)가 있는 경우, 선지(1번, 2번, 3번...) 단위로 묶어서 뭉뚱그려 해설하지 말고, 반드시 각 보기(ㄱ, ㄴ, ㄷ) 단위를 개별 항목으로 나누어 분석해. 
    - options 배열의 label에 'ㄱ', 'ㄴ', 'ㄷ' (혹은 '가', '나', '다')을 넣고 각각이 왜 맞고 틀린지 개별적으로 상세히 설명해. 
    - 보기가 아예 없는 단순 5지선다형 문제일 때만 예외적으로 1~5번 선지를 해설해.
 6. 모든 개별 보기 설명이 끝난 후, options 배열 마지막 항목으로 label: '정답 도출'을 추가하여, 최종적으로 앞서 분석한 보기들을 바탕으로 왜 해당 번호가 최종 정답인지 1~2문장으로 결론을 지어줘.`;
 
-    const CONCEPT_FEW_SHOT = `당신은 다정하고 차분한 1타 과학 선생님이야. 학생이 물어본 과학 개념어를 아래 JSON 포맷에 맞게 설명해 줘.\n[절대 규칙]\n1. 반말투 유지.\n2. 이모지 금지.\n3. title 필드 마크다운 금지.\n4. 어원 뜻 풀이 상세하게 작성.\n5. 비유와 스토리 필수.`;
+    const CONCEPT_FEW_SHOT = `당신은 다정하고 차분한 1타 과학 선생님이야. 학생이 물어본 과학 개념어를 아래 JSON 포맷에 맞게 설명해 줘.
+[절대 규칙]
+1. 반말투 유지.
+2. 이모지 금지.
+3. title 필드 마크다운 금지.
+4. etymology.hanjaChars 배열에 한자를 글자 단위로 분리해서 각각의 음(reading)과 뜻(meaning)을 적어줘. 예: [{"char":"氣","meaning":"기운","reading":"기"},{"char":"壓","meaning":"누를","reading":"압"}]
+5. etymology.hanjaSummary에는 한자 어원을 바탕으로 이 단어가 왜 이런 이름이 붙었는지 한 문장으로 설명해줘. 이 설명은 definition과 내용이 겹치지 않도록 어원의 의미에만 집중해.
+6. definition.summary에 한 문장 핵심 정의를 적고, definition.detail에는 이 개념이 실제 과학 문제(특히 고1 3월 모의고사)에서 어떤 맥락으로 출제되는지, 왜 중요한지, 관련 현상이나 원리를 구체적인 예시와 함께 상세하게 4~6문장으로 설명해. 학생이 이 개념만 읽고도 문제를 풀 수 있을 정도로 충분히 설명해줘.
+7. 비유와 스토리(analogyAndStory)는 일상적인 경험에 비유해서 설명해줘.
+8. [중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.`;
 
     // --- COMPONENTS ---
     const ChatInput = ({ onSubmit, placeholder, className }) => {
       const [input, setInput] = useState('');
       const handleFormSubmit = (e) => { e.preventDefault(); if (input.trim()) { onSubmit(input.trim()); setInput(''); } };
       return (
-        <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 w-full max-w-lg mx-auto bg-white p-2 pl-4 rounded-full border border-paper-edge shadow-sm font-sans-kr ${className || ''}`} style={{ borderColor: 'rgba(44,36,22,.12)' }}>
+        <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 w-full max-w-lg mx-auto bg-white p-2 pl-4 rounded-full border font-sans-kr ${className || ''}`} style={{ borderColor: 'rgba(44,36,22,.12)' }}>
           <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={placeholder || "궁금한 게 더 있으면 물어봐!"} className="flex-1 bg-transparent py-1.5 outline-none text-ink font-medium placeholder:text-ink-faint text-sm font-sans-kr" />
           <button type="submit" disabled={!input.trim()} className="bg-accent text-white p-2 rounded-full hover:bg-cover disabled:opacity-40 transition-colors flex items-center justify-center shrink-0">
             <Send size={14} className="ml-0.5" />
@@ -362,36 +346,29 @@
       );
     };
 
-    // --- BOOK LAYOUT (English Bible Style) ---
+    // --- BOOK LAYOUT: fixed height, independent scroll ---
     const BookLayout = ({ leftPage, rightPage, onGoHome, pageNumLeft, pageNumRight }) => {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-3 md:p-6">
-
+        <div className="h-full flex flex-col items-center justify-center p-3 md:p-5">
           {/* Book Shell */}
-          <div className="w-full max-w-[1100px] book-shell relative flex rounded-r-[10px] rounded-l-[4px]" style={{ padding: '6px 6px 6px 0', background: '#1e3a28' }}>
-
+          <div className="w-full max-w-[1100px] book-shell relative flex rounded-r-[10px] rounded-l-[4px] flex-1" style={{ padding: '6px 6px 6px 0', background: '#1e3a28', maxHeight: 'calc(100vh - 50px)', minHeight: 0 }}>
             {/* Spine */}
             <div className="hidden md:block book-spine-bg rounded-l-[4px] relative" style={{ width: '22px', minWidth: '22px' }}>
               <div className="spine-gold-line absolute top-[8%] bottom-[8%] left-1/2 w-px opacity-40"></div>
             </div>
-            {/* Mobile Spine */}
-            <div className="md:hidden book-spine-bg w-full rounded-t-[4px]" style={{ height: '12px', minHeight: '12px' }}></div>
 
             {/* Pages area */}
-            <div className="flex-1 flex flex-col md:flex-row bg-paper rounded-r-[6px] md:rounded-l-none overflow-hidden relative" style={{ boxShadow: 'inset 2px 0 8px rgba(0,0,0,.06)', minHeight: '70vh' }}>
-
-              {/* Gutter */}
-              <div className="hidden md:block book-gutter absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-[2] pointer-events-none" style={{ width: '50px' }}>
-                <div className="book-gutter-line absolute top-[2%] bottom-[2%] left-1/2 w-px"></div>
+            <div className="flex-1 flex md:flex-row flex-col bg-paper rounded-r-[6px] md:rounded-l-none relative" style={{ boxShadow: 'inset 2px 0 8px rgba(0,0,0,.06)', overflow: 'hidden' }}>
+              {/* Gutter - z-index above pages to cover footer area too */}
+              <div className="hidden md:block absolute pointer-events-none" style={{ top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '50px', zIndex: 10, background: 'linear-gradient(90deg, transparent, rgba(30,24,15,.04) 15%, rgba(30,24,15,.09) 35%, rgba(30,24,15,.16) 50%, rgba(30,24,15,.09) 65%, rgba(30,24,15,.04) 85%, transparent)' }}>
+                <div className="absolute" style={{ top: 0, bottom: 0, left: '50%', width: '1px', background: 'rgba(30,24,15,.1)' }}></div>
               </div>
-
               {/* Edge right */}
-              <div className="hidden md:block book-edge-right absolute top-1 bottom-1 -right-[3px] w-[3px] rounded-r-sm -z-[1]"></div>
+              <div className="hidden md:block book-edge-right absolute top-1 bottom-1 -right-[3px] w-[3px] rounded-r-sm" style={{ zIndex: -1 }}></div>
 
               {/* Left Page */}
-              <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col page-left-bg relative z-[5]">
-                {/* Header */}
-                <div className="px-6 md:px-10 pt-5 pb-0 shrink-0">
+              <div className="w-full md:w-1/2 flex flex-col page-left-bg relative" style={{ zIndex: 5, minHeight: 0, height: '100%' }}>
+                <div className="px-6 md:px-10 pt-4 pb-0 shrink-0">
                   <div className="flex items-center justify-between mb-1">
                     {onGoHome ? (
                       <button onClick={onGoHome} className="font-sans-kr text-ink-faint hover:text-accent transition-colors flex items-center gap-1 text-xs font-medium">
@@ -400,42 +377,35 @@
                     ) : <div></div>}
                     <div className="font-sans-kr text-ink-faint text-[0.58rem] tracking-[0.12em] text-right">2025 고1 3월 학력평가 · 과학</div>
                   </div>
-                  <div className="header-line w-full h-px opacity-20 mb-4"></div>
+                  <div className="header-line w-full h-px opacity-20 mb-3"></div>
                 </div>
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto book-scroll px-6 md:px-10">
+                <div className="flex-1 overflow-y-auto book-scroll px-6 md:px-10" style={{ minHeight: 0 }}>
                   {leftPage}
                 </div>
-                {/* Footer */}
-                <div className="page-num-bg sticky bottom-0 left-0 right-0 text-left px-6 md:px-10 py-2 z-[3]">
+                <div className="page-num-bg shrink-0 text-left px-6 md:px-10 py-1.5" style={{ zIndex: 3 }}>
                   <span className="font-serif-kr text-ink-faint text-[0.7rem]">{pageNumLeft}</span>
                 </div>
               </div>
 
               {/* Right Page */}
-              <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col page-right-bg relative z-[5]">
-                {/* Header */}
-                <div className="px-6 md:px-10 pt-5 pb-0 shrink-0">
+              <div className="w-full md:w-1/2 flex flex-col page-right-bg relative" style={{ zIndex: 5, minHeight: 0, height: '100%' }}>
+                <div className="px-6 md:px-10 pt-4 pb-0 shrink-0">
                   <div className="flex items-center justify-end mb-1">
-                    <div className="font-sans-kr text-ink-faint text-[0.58rem] tracking-[0.12em]">김수석 선생님의 바이블 · 통합과학</div>
+                    <div className="font-sans-kr text-ink-faint text-[0.58rem] tracking-[0.12em]">예비고1 바이블 · 통합과학편</div>
                   </div>
-                  <div className="header-line w-full h-px opacity-20 mb-4"></div>
+                  <div className="header-line w-full h-px opacity-20 mb-3"></div>
                 </div>
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto book-scroll px-6 md:px-10">
+                <div className="flex-1 overflow-y-auto book-scroll px-6 md:px-10" style={{ minHeight: 0 }}>
                   {rightPage}
                 </div>
-                {/* Footer */}
-                <div className="page-num-bg sticky bottom-0 left-0 right-0 text-right px-6 md:px-10 py-2 z-[3]">
+                <div className="page-num-bg shrink-0 text-right px-6 md:px-10 py-1.5" style={{ zIndex: 3 }}>
                   <span className="font-serif-kr text-ink-faint text-[0.7rem]">{pageNumRight}</span>
                 </div>
               </div>
-
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-2 font-sans-kr text-[0.6rem] text-white/30 text-center tracking-wider">© 수석의방 · 2025 고1 3월 학력평가 과학</div>
+          <div className="mt-1.5 font-sans-kr text-[0.58rem] text-white/25 text-center tracking-wider shrink-0">© 수석의방 · 2025 고1 3월 학력평가 과학</div>
         </div>
       );
     };
@@ -445,16 +415,21 @@
     const HomeView = ({ onStart }) => {
       const [selectedSubject, setSelectedSubject] = useState('물리');
 
+      // Both cards align their BOTTOM at 30% from the page bottom
       const leftContent = (
-        <div className="flex flex-col justify-center h-full animate-fade-in max-w-sm mx-auto py-6">
-          <div className="w-8 h-0.5 bg-accent mb-5"></div>
-          <p className="font-sans-kr text-ink-faint text-[0.68rem] tracking-[0.1em] mb-3">예비고1 바이블 과학편</p>
-          <h1 className="text-2xl font-bold text-accent mb-1 leading-tight font-serif-kr">2025 고1 3월<br />학력평가 해설</h1>
-          <p className="text-ink-light text-sm leading-relaxed mt-3 mb-8" style={{ textAlign: 'justify', wordBreak: 'keep-all' }}>새로운 시작의 순간, 흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
+        <div className="relative h-full animate-fade-in pt-8 md:pt-10">
+          {/* Title - positioned at top */}
+          <div>
+            <div className="w-8 h-0.5 bg-accent mb-5"></div>
+            <p className="font-sans-kr text-ink-faint text-[0.68rem] tracking-[0.1em] mb-4">예비고1 바이블 과학편</p>
+            <h1 className="text-[1.5rem] font-bold text-accent leading-[1.35] font-serif-kr mb-2">2025 고1 3월<br />학력평가 해설</h1>
+            <p className="text-ink-light text-[0.84rem] leading-[1.85] mt-4" style={{ wordBreak: 'keep-all' }}>새로운 시작의 순간,<br />흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
+          </div>
 
-          <div className="bg-white p-5 rounded-lg border border-paper-edge" style={{ boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+          {/* Card - absolutely positioned from bottom */}
+          <div className="absolute left-0 right-0 bg-white p-5 rounded-lg border border-paper-edge" style={{ bottom: '25%', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
             <h3 className="font-sans-kr font-bold text-ink text-[0.88rem] mb-2">전체 문항 차근차근 풀기</h3>
-            <p className="text-ink-light text-[0.82rem] mb-4 leading-relaxed" style={{ textAlign: 'justify', wordBreak: 'keep-all' }}>1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하세요.</p>
+            <p className="text-ink-light text-[0.82rem] mb-4 leading-[1.85]" style={{ wordBreak: 'keep-all' }}>1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하세요.</p>
             <button onClick={() => onStart('full')} className="w-full bg-accent text-white py-2.5 rounded-lg font-sans-kr font-medium hover:bg-cover transition-colors flex items-center justify-center gap-2 text-sm" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
               전체 문항 시작하기 <ArrowRight size={14} />
             </button>
@@ -463,10 +438,11 @@
       );
 
       const rightContent = (
-        <div className="flex flex-col justify-center h-full animate-fade-in max-w-sm mx-auto py-6">
-          <div className="bg-white p-5 rounded-lg border border-paper-edge" style={{ boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+        <div className="relative h-full animate-fade-in pt-8 md:pt-10">
+          {/* Card - same bottom position as left */}
+          <div className="absolute left-0 right-0 bg-white p-5 rounded-lg border border-paper-edge" style={{ bottom: '25%', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
             <h3 className="font-sans-kr font-bold text-ink text-[0.88rem] mb-2">과목별 집중 학습</h3>
-            <p className="text-ink-light text-[0.82rem] mb-4 leading-relaxed" style={{ textAlign: 'justify', wordBreak: 'keep-all' }}>어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
+            <p className="text-ink-light text-[0.82rem] mb-4 leading-[1.85]" style={{ wordBreak: 'keep-all' }}>어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
             <div className="grid grid-cols-2 gap-2 mb-4">
               {['물리', '화학', '생명과학', '지구과학'].map(sub => (
                 <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-2.5 px-2 rounded-lg text-[0.78rem] font-sans-kr font-medium transition-all ${selectedSubject === sub ? 'bg-cover text-paper border border-cover' : 'bg-white text-ink-light border border-paper-edge hover:border-accent hover:text-accent'}`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
@@ -487,9 +463,6 @@
     const SolveView = ({ problem, onSubmit, isSubmitting, onPrev, onNext, isFirst, isLast, currentIndex, totalProblems, onGoHome, pageNumLeft, pageNumRight }) => {
       const [answer, setAnswer] = useState('');
       useEffect(() => { setAnswer(''); }, [problem.id]);
-      const handleSubmit = () => { if (answer) onSubmit(answer); };
-
-      const subjectColor = { '물리': '#3d7a4a', '화학': '#c4a44a', '생명과학': '#4a9e5c', '지구과학': '#6b5d4a' };
 
       const leftContent = (
         <div className="flex flex-col h-full animate-fade-in pb-4">
@@ -501,10 +474,7 @@
             {problem.imageUrl ? (
               <img src={problem.imageUrl} alt={`${problem.number}번 문제`} className="w-full max-w-full h-auto object-contain" style={{ mixBlendMode: 'multiply' }} />
             ) : (
-              <div className="text-center p-8 text-ink-faint">
-                <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                <p className="font-sans-kr font-medium text-sm">이미지를 불러올 수 없습니다.</p>
-              </div>
+              <div className="text-center p-8 text-ink-faint"><AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-50" /><p className="font-sans-kr font-medium text-sm">이미지를 불러올 수 없습니다.</p></div>
             )}
           </div>
         </div>
@@ -522,20 +492,19 @@
             </div>
 
             <div className="bg-white p-5 rounded-lg border relative mt-4" style={{ borderColor: 'rgba(44,36,22,.08)', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
-              {isSubmitting ? (
+              {isSubmitting && (
                 <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center z-20 rounded-lg">
                   <Loader2 className="w-7 h-7 text-accent animate-spin mb-3" />
                   <h3 className="font-sans-kr font-medium text-sm text-ink-light">해설 준비 중...</h3>
                 </div>
-              ) : null}
-
+              )}
               <h4 className="font-sans-kr font-bold text-accent mb-4 text-center text-sm">이 문제의 정답은?</h4>
               <div className="flex flex-col gap-3">
                 <div className="flex bg-paper rounded-lg border overflow-hidden" style={{ borderColor: 'rgba(44,36,22,.12)' }}>
                   <span className="font-sans-kr text-ink-light font-medium px-4 flex items-center justify-center text-[0.76rem]" style={{ background: '#f0ebe0', borderRight: '1px solid rgba(44,36,22,.1)' }}>입력</span>
                   <input type="number" min="1" max="5" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="1~5 숫자 입력" disabled={isSubmitting} className="flex-1 p-2.5 text-center outline-none font-bold text-ink text-sm bg-transparent font-serif-kr" />
                 </div>
-                <button onClick={handleSubmit} disabled={!answer || isSubmitting} className="w-full bg-accent disabled:bg-ink-faint/30 text-white py-2.5 rounded-lg font-sans-kr font-medium transition-all hover:bg-cover text-sm mt-1" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
+                <button onClick={() => { if (answer) onSubmit(answer); }} disabled={!answer || isSubmitting} className="w-full bg-accent disabled:bg-ink-faint/30 text-white py-2.5 rounded-lg font-sans-kr font-medium transition-all hover:bg-cover text-sm mt-1" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
                   채점하고 해설 보기
                 </button>
               </div>
@@ -566,27 +535,24 @@
 
       const rightContent = (
         <div className="flex flex-col gap-5 animate-fade-in pb-6">
-          {/* Result banner */}
-          <div className={`p-3 rounded-lg flex items-center gap-3 bg-white border ${isCorrect ? 'border-accent/30 text-accent' : 'text-red-soft'}`} style={{ borderColor: isCorrect ? 'rgba(74,158,92,.3)' : 'rgba(166,61,47,.2)', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
-            {isCorrect ? <CheckCircle className="w-5 h-5 shrink-0" /> : <RotateCcw className="w-5 h-5 shrink-0" />}
+          <div className={`p-3 rounded-lg flex items-center gap-3 bg-white border`} style={{ borderColor: isCorrect ? 'rgba(74,158,92,.3)' : 'rgba(166,61,47,.2)', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
+            {isCorrect ? <CheckCircle className="w-5 h-5 shrink-0 text-accent" /> : <RotateCcw className="w-5 h-5 shrink-0 text-red-soft" />}
             <div className="font-sans-kr">
-              <h2 className="font-bold text-sm">{isCorrect ? '정답이야! 훌륭해.' : '아쉽네, 오답이야.'}</h2>
-              <p className="text-[0.76rem] mt-0.5 opacity-80">제출: {cleanTitleStr(userAnswer)} / 정답: {problem.correctAnswer}</p>
+              <h2 className={`font-bold text-sm ${isCorrect ? 'text-accent' : 'text-red-soft'}`}>{isCorrect ? '정답이야! 훌륭해.' : '아쉽네, 오답이야.'}</h2>
+              <p className="text-[0.76rem] mt-0.5 text-ink-light">제출: {cleanTitleStr(userAnswer)} / 정답: {problem.correctAnswer}</p>
             </div>
           </div>
 
-          {/* Teacher intro */}
           <div className="teacher-box rounded-lg p-4">
             <div className="flex items-start gap-2.5">
               <img src={TEACHER_ICON} alt="선생님" className="w-8 h-8 shrink-0 rounded-full border border-paper-edge bg-white shadow-sm" />
               <div className="flex-1 min-w-0 pt-0.5">
                 <h3 className="font-sans-kr font-bold text-accent mb-1 text-[0.7rem]">김수석 선생님</h3>
-                <FormattedParagraphs text={explanation.intro} className="text-ink-light text-[0.82rem] leading-relaxed" />
+                <FormattedParagraphs text={explanation.intro} className="text-ink text-[0.82rem]" />
               </div>
             </div>
           </div>
 
-          {/* Options analysis */}
           {optionsList.length > 0 && (
             <div className="space-y-3">
               {optionsList.map((opt, idx) => {
@@ -599,7 +565,7 @@
                       </span>
                       {opt?.text && <p className="font-bold text-[0.82rem] text-ink leading-snug">{renderWithBold(opt?.text)}</p>}
                     </div>
-                    <div className="pl-1 mt-1.5 text-[0.78rem] text-ink-light leading-relaxed">
+                    <div className="pl-1 mt-1.5 text-[0.8rem] text-ink leading-relaxed">
                       <FormattedParagraphs text={opt?.detail || opt?.explanation} />
                     </div>
                   </div>
@@ -608,20 +574,18 @@
             </div>
           )}
 
-          {/* Core concept */}
-          {explanation.coreConcept && explanation.coreConcept.content && (
+          {explanation.coreConcept?.content && (
             <div className="pt-5 mt-1" style={{ borderTop: '1px solid rgba(44,36,22,.08)' }}>
               <h3 className="font-sans-kr font-bold text-ink mb-2 text-sm flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-gold" />
                 {cleanTitleStr(explanation.coreConcept.title)}
               </h3>
-              <div className="text-ink-light text-[0.82rem] leading-relaxed bg-white p-4 rounded-lg border" style={{ borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
+              <div className="text-ink text-[0.82rem] leading-relaxed bg-white p-4 rounded-lg border" style={{ borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
                 <FormattedParagraphs text={explanation.coreConcept.content} />
               </div>
             </div>
           )}
 
-          {/* Concept buttons & next */}
           <div className="pt-5 mt-1" style={{ borderTop: '1px solid rgba(44,36,22,.08)' }}>
             <p className="font-sans-kr text-[0.7rem] font-medium text-ink-faint mb-3 text-center tracking-wider">모르는 개념이 있다면 눌러봐!</p>
             <div className="flex flex-wrap justify-center gap-2 mb-5">
@@ -644,10 +608,37 @@
       return <BookLayout leftPage={leftContent} rightPage={rightContent} onGoHome={onGoHome} pageNumLeft={pageNumLeft} pageNumRight={pageNumRight} />;
     };
 
+    // --- Hanja table component ---
+    const HanjaTable = ({ chars }) => {
+      if (!chars || chars.length === 0) return null;
+      return (
+        <table className="w-full border-collapse rounded-lg overflow-hidden mb-2" style={{ boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+          <thead>
+            <tr>
+              <th className="font-sans-kr text-[0.66rem] font-medium text-paper py-1.5 px-3 text-center" style={{ background: '#1e3a28' }}>한자</th>
+              <th className="font-sans-kr text-[0.66rem] font-medium text-paper py-1.5 px-3 text-center" style={{ background: '#1e3a28' }}>음</th>
+              <th className="font-sans-kr text-[0.66rem] font-medium text-paper py-1.5 px-3 text-left" style={{ background: '#1e3a28' }}>뜻</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chars.map((c, i) => (
+              <tr key={i} style={{ borderBottom: i < chars.length - 1 ? '1px solid rgba(44,36,22,.06)' : 'none' }}>
+                <td className="font-serif-kr text-lg text-ink text-center py-2 px-3 bg-white">{cleanTitleStr(c.char)}</td>
+                <td className="font-sans-kr text-[0.8rem] text-accent font-bold text-center py-2 px-3 bg-white">{cleanTitleStr(c.reading)}</td>
+                <td className="font-sans-kr text-[0.8rem] text-ink py-2 px-3 bg-white">{cleanTitleStr(c.meaning)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
     const ConceptView = ({ concept, originalConcepts, newConcepts, returnText, onNextConcept, onNextProblem, onGoHome, pageNumLeft, pageNumRight }) => {
       const etymology = concept?.etymology || {};
-      const hasHanja = etymology.hasHanja && etymology.hanjaTerm;
+      const hasHanja = etymology.hasHanja && etymology.hanjaChars && etymology.hanjaChars.length > 0;
       const hasLoanword = etymology.hasLoanword && etymology.loanwordTerm;
+      // fallback for old schema
+      const hanjaChars = etymology.hanjaChars || [];
 
       const leftContent = (
         <div className="flex flex-col gap-5 animate-fade-in pb-6">
@@ -656,18 +647,22 @@
           </h2>
 
           {(hasHanja || hasLoanword) && (
-            <div className="mt-1 space-y-3">
+            <div className="mt-1 space-y-4">
               <h3 className="font-sans-kr text-sm font-bold text-ink-faint flex items-center gap-1.5"><Globe size={14} /> 어원 분석</h3>
               {hasHanja && (
-                <div className="bg-white p-4 rounded-lg border" style={{ borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
-                  <div className="font-serif-kr text-lg tracking-widest text-ink-light mb-2">{cleanTitleStr(etymology.hanjaTerm)}</div>
-                  <FormattedParagraphs text={etymology.hanjaMeaning} className="text-[0.82rem] text-ink-light leading-relaxed" />
+                <div>
+                  <HanjaTable chars={hanjaChars} />
+                  {etymology.hanjaSummary && (
+                    <p className="text-[0.82rem] text-ink leading-[1.85] mt-2 pl-1" style={{ wordBreak: 'keep-all' }}>
+                      {renderWithBold(cleanTextStr(etymology.hanjaSummary))}
+                    </p>
+                  )}
                 </div>
               )}
               {hasLoanword && (
                 <div className="bg-white p-4 rounded-lg border" style={{ borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
                   <div className="font-serif-kr text-lg tracking-wide text-accent mb-2">{cleanTitleStr(etymology.loanwordTerm)}</div>
-                  <FormattedParagraphs text={etymology.loanwordMeaning} className="text-[0.82rem] text-ink-light leading-relaxed" />
+                  <FormattedParagraphs text={etymology.loanwordMeaning} className="text-[0.82rem] text-ink leading-relaxed" />
                 </div>
               )}
             </div>
@@ -675,8 +670,8 @@
 
           <div className="mt-2">
             <h3 className="font-sans-kr text-sm font-bold text-ink-faint flex items-center gap-1.5 mb-2.5"><BookOpen size={14} /> 개념 정의</h3>
-            <p className="font-bold text-sm text-accent bg-white p-3.5 rounded-lg border" style={{ borderColor: 'rgba(74,158,92,.15)', background: 'rgba(74,158,92,.06)' }}>{renderWithBold(cleanTextStr(concept?.definition?.summary))}</p>
-            <div className="text-[0.82rem] text-ink-light pl-3 mt-3 leading-relaxed" style={{ borderLeft: '2px solid #4a9e5c' }}>
+            <p className="font-bold text-sm text-accent p-3.5 rounded-lg border" style={{ borderColor: 'rgba(74,158,92,.15)', background: 'rgba(74,158,92,.06)' }}>{renderWithBold(cleanTextStr(concept?.definition?.summary))}</p>
+            <div className="text-[0.82rem] text-ink pl-3 mt-3 leading-[1.85]" style={{ borderLeft: '2px solid #4a9e5c', wordBreak: 'keep-all' }}>
               <FormattedParagraphs text={concept?.definition?.detail} />
             </div>
           </div>
@@ -690,7 +685,7 @@
               <div className="p-5 rounded-lg mb-6 border" style={{ background: '#fff9f0', borderColor: '#f5ead5', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
                 <h3 className="font-sans-kr text-sm font-bold mb-2.5 flex items-center gap-1.5" style={{ color: '#a67c3d' }}><Sparkles size={14} /> 비유로 이해하기</h3>
                 <h4 className="font-bold text-ink text-[0.82rem] mb-1.5">{cleanTitleStr(concept.analogyAndStory.title)}</h4>
-                <FormattedParagraphs text={concept.analogyAndStory.content} className="text-[0.82rem] text-ink-light leading-relaxed" />
+                <FormattedParagraphs text={concept.analogyAndStory.content} className="text-[0.82rem] text-ink leading-[1.85]" />
               </div>
             )}
 
@@ -719,10 +714,7 @@
     const SummaryView = ({ sessionData, explanations, summaryFeedback, isGeneratingSummary, onReviewIncorrect, onConceptClick, onGoHome, pageNumLeft, pageNumRight }) => {
       const { queue, answers } = sessionData;
       const total = queue.length;
-      const incorrectProblemIds = queue.filter(id => {
-        const prob = INITIAL_PROBLEMS.find(p => p.id === id);
-        return parseInt(answers[id]) !== prob.correctAnswer;
-      });
+      const incorrectProblemIds = queue.filter(id => { const prob = INITIAL_PROBLEMS.find(p => p.id === id); return parseInt(answers[id]) !== prob.correctAnswer; });
       const correctCount = total - incorrectProblemIds.length;
       const score = Math.round((correctCount / total) * 100);
 
@@ -731,7 +723,6 @@
           <div className="w-8 h-0.5 bg-accent mb-5"></div>
           <Target size={36} className="text-accent mb-3" />
           <h2 className="text-xl font-bold text-ink mb-6 font-serif-kr tracking-tight">학습 총평</h2>
-
           <div className="flex justify-center items-center gap-6 bg-white p-6 rounded-lg border w-full max-w-[280px]" style={{ borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
             <div className="text-center">
               <div className="text-2xl font-black text-ink font-serif-kr">{correctCount}<span className="text-sm text-ink-faint">/{total}</span></div>
@@ -739,9 +730,7 @@
             </div>
             <div className="h-10 w-px bg-paper-edge"></div>
             <div className="text-center">
-              <div className={`text-2xl font-black font-serif-kr ${score >= 80 ? 'text-accent' : score >= 50 ? 'text-gold' : 'text-red-soft'}`}>
-                {score}<span className="text-sm">점</span>
-              </div>
+              <div className={`text-2xl font-black font-serif-kr ${score >= 80 ? 'text-accent' : score >= 50 ? 'text-gold' : 'text-red-soft'}`}>{score}<span className="text-sm">점</span></div>
               <div className="font-sans-kr text-[0.68rem] font-medium text-ink-faint mt-1">달성률</div>
             </div>
           </div>
@@ -750,20 +739,17 @@
 
       const rightContent = (
         <div className="flex flex-col gap-5 animate-fade-in pb-6">
-          {/* Teacher feedback */}
           <div className="teacher-box rounded-lg p-4">
             <div className="flex items-start gap-2.5">
               <img src={TEACHER_ICON} alt="선생님" className="w-8 h-8 shrink-0 rounded-full border border-paper-edge bg-white shadow-sm" />
               <div className="flex-1 min-w-0 pt-0.5">
                 <h3 className="font-sans-kr font-bold text-accent mb-1.5 text-sm">김수석 선생님의 피드백</h3>
                 {isGeneratingSummary ? (
-                  <div className="flex items-center gap-2 text-ink-light text-sm font-sans-kr">
-                    <Loader2 className="w-4 h-4 animate-spin" /> 따뜻한 분석을 작성 중이야...
-                  </div>
+                  <div className="flex items-center gap-2 text-ink-light text-sm font-sans-kr"><Loader2 className="w-4 h-4 animate-spin" /> 따뜻한 분석을 작성 중이야...</div>
                 ) : summaryFeedback ? (
                   <div>
                     <h4 className="font-bold text-ink mb-1 text-[0.82rem]">{cleanTitleStr(summaryFeedback.title)}</h4>
-                    <FormattedParagraphs text={summaryFeedback.content} className="text-ink-light text-[0.82rem] leading-relaxed" />
+                    <FormattedParagraphs text={summaryFeedback.content} className="text-ink text-[0.82rem]" />
                   </div>
                 ) : null}
               </div>
@@ -802,33 +788,24 @@
       const prefetchRef = useRef({});
       const [viewingConceptName, setViewingConceptName] = useState(null);
 
-      const handleGoHome = () => {
-        setAppState('HOME'); setSessionData({ mode: null, queue: [], currentIndex: 0, answers: {} });
-        setIsWaitingForExplanation(false); setSummaryFeedback(null);
-      };
+      const handleGoHome = () => { setAppState('HOME'); setSessionData({ mode: null, queue: [], currentIndex: 0, answers: {} }); setIsWaitingForExplanation(false); setSummaryFeedback(null); };
 
       const startSession = (mode, options = {}) => {
         let queue = [];
         if (mode === 'full') queue = INITIAL_PROBLEMS.map(p => p.id);
         else queue = INITIAL_PROBLEMS.filter(p => p.subject === options.subject).map(p => p.id);
         if (queue.length === 0) return alert("해당 조건의 문제가 없어.");
-        setSessionData({ mode, queue, currentIndex: 0, answers: {} });
-        setIsWaitingForExplanation(false); setSummaryFeedback(null); setAppState('SOLVE');
+        setSessionData({ mode, queue, currentIndex: 0, answers: {} }); setIsWaitingForExplanation(false); setSummaryFeedback(null); setAppState('SOLVE');
       };
 
-      const startReviewSession = (incorrectIds) => {
-        setSessionData({ mode: 'review', queue: incorrectIds, currentIndex: 0, answers: {} });
-        setIsWaitingForExplanation(false); setSummaryFeedback(null); setAppState('SOLVE');
-      };
+      const startReviewSession = (incorrectIds) => { setSessionData({ mode: 'review', queue: incorrectIds, currentIndex: 0, answers: {} }); setIsWaitingForExplanation(false); setSummaryFeedback(null); setAppState('SOLVE'); };
 
       const handleNextProblem = () => {
         if (sessionData.currentIndex >= sessionData.queue.length - 1) setAppState('SUMMARY');
         else { setSessionData(prev => ({ ...prev, currentIndex: prev.currentIndex + 1 })); setIsWaitingForExplanation(false); setAppState('SOLVE'); }
       };
 
-      const handlePrevProblem = () => {
-        if (sessionData.currentIndex > 0) { setSessionData(prev => ({ ...prev, currentIndex: prev.currentIndex - 1 })); setIsWaitingForExplanation(false); setAppState('SOLVE'); }
-      };
+      const handlePrevProblem = () => { if (sessionData.currentIndex > 0) { setSessionData(prev => ({ ...prev, currentIndex: prev.currentIndex - 1 })); setIsWaitingForExplanation(false); setAppState('SOLVE'); } };
 
       const currentProblemId = sessionData.queue[sessionData.currentIndex];
       const currentProblem = INITIAL_PROBLEMS.find(p => p.id === currentProblemId);
@@ -839,42 +816,39 @@
           if (generatedExplanations[pId] || prefetchRef.current[pId]) return;
           prefetchRef.current[pId] = true;
           setPrefetchStatus(prev => ({ ...prev, [pId]: 'loading' }));
-          const prefetchExplanation = async () => {
+          (async () => {
             try {
               const base64Img = await imageUrlToBase64(currentProblem.imageUrl);
               const prompt = `이 문제의 실제 정답은 무조건 **${currentProblem.correctAnswer}번**이야. 정답이 ${currentProblem.correctAnswer}번이라는 절대적인 전제 하에, 논리적으로 모순이 없도록 각 선지를 분석하고 상세 해설을 제공해. 실제 이미지를 분석해서 물리, 화학, 생명과학, 지구과학 중 어느 과목인지 판단해 'subject'에 적어.`;
               const result = await callGeminiAPI(prompt, EXPLANATION_FEW_SHOT, base64Img, EXPLANATION_SCHEMA);
               setGeneratedExplanations(prev => ({ ...prev, [pId]: result }));
               setPrefetchStatus(prev => ({ ...prev, [pId]: 'done' }));
-            } catch (error) { setPrefetchStatus(prev => ({ ...prev, [pId]: 'error' })); }
-          };
-          prefetchExplanation();
+            } catch { setPrefetchStatus(prev => ({ ...prev, [currentProblem.id]: 'error' })); }
+          })();
         }
       }, [appState, currentProblem]);
 
       useEffect(() => {
         if (appState === 'SUMMARY' && !summaryFeedback && !isGeneratingSummary) {
           setIsGeneratingSummary(true);
-          const generateSummary = async () => {
+          (async () => {
             const total = sessionData.queue.length;
             const incorrectIds = sessionData.queue.filter(id => parseInt(sessionData.answers[id]) !== INITIAL_PROBLEMS.find(p => p.id === id).correctAnswer);
             const correctCount = total - incorrectIds.length;
             const score = Math.round((correctCount / total) * 100);
             const incorrectSubjects = Array.from(new Set(incorrectIds.map(id => INITIAL_PROBLEMS.find(p => p.id === id).subject)));
-            const prompt = `학생이 방금 과학 모의고사를 풀었어. 총 ${total}문제 중 ${correctCount}문제를 맞췄고, 정답률은 ${score}%야. ${incorrectIds.length > 0 ? `틀린 과목은 [${incorrectSubjects.join(', ')}]야.` : '틀린 문제가 없어 완벽해!'} 이 결과를 바탕으로, 1타 과학 강사 김수석의 다정하고 따뜻한 반말투로 총평(피드백)을 작성해줘. 학생이 노력한 점을 아낌없이 칭찬하고 격려하는 것을 위주로 작성하며, 틀린 부분에 대해서는 부드럽고 긍정적인 방향으로 보완할 점을 짚어줘. 절대 너무 날카롭거나 혼내는 듯한 말투는 쓰지 마. title에는 마크다운을 절대 쓰지 마. content에는 단락 구분을 위해 '\\n\\n'을 꼭 쓰고, 중요한 단어만 **단어** 로 강조해.`;
+            const prompt = `학생이 방금 과학 모의고사를 풀었어. 총 ${total}문제 중 ${correctCount}문제를 맞췄고, 정답률은 ${score}%야. ${incorrectIds.length > 0 ? `틀린 과목은 [${incorrectSubjects.join(', ')}]야.` : '틀린 문제가 없어 완벽해!'} 이 결과를 바탕으로, 1타 과학 강사 김수석의 다정하고 따뜻한 반말투로 총평을 작성해줘. 칭찬과 격려 위주로. title에 마크다운 금지. content에 '\\n\\n'으로 단락 구분, 중요한 단어만 **단어**로 강조. [중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.`;
             try {
-              const result = await callGeminiAPI(prompt, "너는 통찰력 있고 다정하며 학생을 아끼는 1타 과학 강사야.", null, SUMMARY_SCHEMA);
+              const result = await callGeminiAPI(prompt, "너는 통찰력 있고 다정하며 학생을 아끼는 1타 과학 강사야. 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 반말로 말해.", null, SUMMARY_SCHEMA);
               setSummaryFeedback(result);
-            } catch (e) { setSummaryFeedback({ title: "학습 완료!", content: "수고 정말 많았어! 결과 데이터를 확인하고 약점을 천천히 보완해보자." }); }
+            } catch { setSummaryFeedback({ title: "학습 완료!", content: "수고 정말 많았어! 결과 데이터를 확인하고 약점을 천천히 보완해보자." }); }
             finally { setIsGeneratingSummary(false); }
-          };
-          generateSummary();
+          })();
         }
       }, [appState, sessionData, summaryFeedback, isGeneratingSummary]);
 
       const applyFallbackAndGo = (pId) => {
-        const fallbackResult = { correctAnswer: currentProblem?.correctAnswer || 1, subject: "오류", intro: "선생님이 해설을 준비하다가 오류가 났어. 다시 시도해 줘.", coreConcept: { title: "분석 실패", content: "데이터를 불러오지 못했어." }, options: [], outro: "기다리게 해서 미안해.", concepts: [] };
-        setGeneratedExplanations(prev => ({ ...prev, [pId]: fallbackResult }));
+        setGeneratedExplanations(prev => ({ ...prev, [pId]: { correctAnswer: currentProblem?.correctAnswer || 1, subject: "오류", intro: "선생님이 해설을 준비하다가 오류가 났어. 다시 시도해 줘.", coreConcept: { title: "분석 실패", content: "데이터를 불러오지 못했어." }, options: [], outro: "기다리게 해서 미안해.", concepts: [] } }));
         setAppState('EXPLAIN');
       };
 
@@ -899,15 +873,15 @@
         if (generatedConcepts[conceptName]) { setViewingConceptName(conceptName); setAppState('CONCEPT'); return; }
         setAppState('LOADING_CONCEPT');
         try {
-          const prompt = `과학 개념어 '${conceptName}'에 대해 쉽게 설명해줘. 어원 분석 시 한자와 외래어를 구분해서 상세히 적어줘.`;
+          const prompt = `과학 개념어 '${conceptName}'에 대해 쉽게 설명해줘. 어원 분석 시 한자를 글자 단위로 분리해서 각각의 음과 뜻을 hanjaChars 배열에 넣어줘. 외래어도 있으면 loanword 필드에 적어줘. definition.detail은 이 개념이 고1 3월 모의고사에서 어떻게 출제되는지, 관련 현상과 원리를 구체적 예시와 함께 4~6문장으로 상세히 설명해줘.`;
           let result;
           try { result = await callGeminiAPI(prompt, CONCEPT_FEW_SHOT, null, CONCEPT_SCHEMA); }
-          catch (apiError) {
-            result = { title: conceptName, etymology: { hasHanja: false, hanjaTerm: "", hanjaMeaning: "", hasLoanword: false, loanwordTerm: "", loanwordMeaning: "" }, definition: { summary: "개념을 불러오지 못했어.", detail: "네트워크 문제일 수 있어. 다시 시도해 줘." }, analogyAndStory: { title: "오류", content: "응답을 처리할 수 없네." }, relatedConcepts: [] };
+          catch {
+            result = { title: conceptName, etymology: { hasHanja: false, hanjaChars: [], hanjaSummary: "", hasLoanword: false, loanwordTerm: "", loanwordMeaning: "" }, definition: { summary: "개념을 불러오지 못했어.", detail: "네트워크 문제일 수 있어. 다시 시도해 줘." }, analogyAndStory: { title: "오류", content: "응답을 처리할 수 없네." }, relatedConcepts: [] };
           }
           setGeneratedConcepts(prev => ({ ...prev, [conceptName]: result }));
           setViewingConceptName(conceptName); setAppState('CONCEPT');
-        } catch (error) { alert("개념 정리 중 오류가 발생했어."); setAppState(appState === 'SUMMARY' ? 'SUMMARY' : 'EXPLAIN'); }
+        } catch { alert("개념 정리 중 오류가 발생했어."); setAppState(appState === 'SUMMARY' ? 'SUMMARY' : 'EXPLAIN'); }
       };
 
       const currentExplanation = generatedExplanations[currentProblemId];
