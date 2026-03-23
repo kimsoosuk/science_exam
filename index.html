@@ -192,6 +192,11 @@
         max-width: calc((100vh - 50px) * 1.3) !important;
         flex: none !important;
       }
+      .cover-aspect {
+        aspect-ratio: 0.65 / 1;
+        max-width: calc((100vh - 50px) * 0.65) !important;
+        flex: none !important;
+      }
     }
   </style>
 </head>
@@ -422,52 +427,84 @@
 
     // --- VIEWS ---
 
+    const CoverLayout = ({ children }) => {
+      return (
+        <div className="h-full w-full flex flex-col items-center justify-center p-3 md:p-5">
+          <div className="w-full book-shell relative flex rounded-r-[10px] rounded-l-[4px]" 
+               style={{ maxWidth: 'calc((100vh - 80px) * 0.715)', aspectRatio: '0.715 / 1', padding: '6px 6px 6px 0', background: '#1e3a28', margin: '0 auto' }}>
+            
+            {/* 왼쪽 책 등(Spine) */}
+            <div className="hidden md:block book-spine-bg rounded-l-[4px] relative" style={{ width: '22px', minWidth: '22px' }}>
+              <div className="absolute top-[8%] bottom-[8%] left-1/2 w-px opacity-40" style={{ background: 'linear-gradient(180deg, transparent, #c4a44a, transparent)' }}></div>
+            </div>
+            
+            {/* 메인 커버 배경 영역 */}
+            <div className="flex-1 flex flex-col rounded-r-[6px] relative overflow-hidden" 
+                 style={{ background: 'linear-gradient(160deg, #2e3d2a 0%, #23301e 30%, #1e2818 60%, #1a2214 100%)' }}>
+              
+              {/* 오른쪽 종이 질감 모서리 */}
+              <div className="hidden md:block book-edge-right absolute top-1 bottom-1 -right-[3px] w-[3px] rounded-r-sm"></div>
+
+              {/* 내부 콘텐츠 (스크롤 가능 영역) */}
+              <div className="flex-1 overflow-y-auto book-scroll px-8 md:px-10 py-8 flex flex-col relative z-10">
+                {children}
+                <div className="flex-1"></div>
+              </div>
+              
+              {/* 하단 미세한 그림자 */}
+              <div className="shrink-0 px-8 md:px-10 py-1.5 absolute bottom-0 left-0 right-0 pointer-events-none" style={{ background: 'linear-gradient(transparent, rgba(26,37,22,.5) 40%)', height: '40px', zIndex: 15 }}></div>
+            </div>
+          </div>
+          
+          <div className="mt-1.5 font-sans-kr text-[0.58rem] text-white/25 text-center tracking-wider shrink-0">
+            © 수석의방 · 2025 고1 3월 학력평가 과학
+          </div>
+        </div>
+      );
+    };
+
     const HomeView = ({ onStart }) => {
       const [selectedSubject, setSelectedSubject] = useState('물리');
 
-      // Both cards align their BOTTOM at 30% from the page bottom
-      const leftContent = (
-        <div className="relative h-full animate-fade-in pt-8 md:pt-10">
-          {/* Title - positioned at top */}
-          <div>
-            <div className="w-8 h-0.5 bg-accent mb-5"></div>
-            <p className="font-sans-kr text-ink-faint text-[0.68rem] tracking-[0.1em] mb-4">예비고1 바이블 과학편</p>
-            <h1 className="text-[1.5rem] font-bold text-accent leading-[1.35] font-serif-kr mb-2">2025 고1 3월<br />학력평가 해설</h1>
-            <p className="text-ink-light text-[0.84rem] leading-[1.85] mt-4" style={{ wordBreak: 'keep-all' }}>새로운 시작의 순간,<br />흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
+      return (
+        <CoverLayout>
+          {/* 타이틀 예시 구조 반영 */}
+          <div className="mb-8 animate-fade-in relative z-20">
+            <div className="w-8 h-0.5 mb-5" style={{ background: '#c4a44a' }}></div>
+            <p className="font-sans-kr text-[0.68rem] tracking-[0.15em] mb-3" style={{ color: '#c4a44a' }}>예비고1 바이블 과학편</p>
+            <h1 className="text-[1.6rem] font-bold leading-[1.4] mb-3 font-sans-kr" style={{ color: '#f8f3e8', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>2025 고1 3월<br />학력평가 해설</h1>
+            <p className="text-[0.82rem] leading-[1.85] mt-4 font-sans-kr" style={{ color: 'rgba(248,243,232,.75)', wordBreak: 'keep-all' }}>새로운 시작의 순간,<br />흔들림 없는 기준이 되어줄 김수석 선생님의 통합과학</p>
           </div>
 
-          {/* Card - absolutely positioned from bottom */}
-          <div className="absolute left-0 right-0 bg-white p-5 rounded-lg border border-paper-edge" style={{ bottom: '25%', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-            <h3 className="font-sans-kr font-bold text-ink text-[0.88rem] mb-2">전체 문항 차근차근 풀기</h3>
-            <p className="text-ink-light text-[0.82rem] mb-4 leading-[1.85]" style={{ wordBreak: 'keep-all' }}>1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하세요.</p>
-            <button onClick={() => onStart('full')} className="w-full bg-accent text-white py-2.5 rounded-lg font-sans-kr font-medium hover:bg-cover transition-colors flex items-center justify-center gap-2 text-sm" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
-              전체 문항 시작하기 <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-      );
+          <div className="w-full h-px mb-6 shrink-0 relative z-20 animate-fade-in" style={{ background: 'linear-gradient(90deg, #c4a44a, rgba(196,164,74,.2))' }}></div>
 
-      const rightContent = (
-        <div className="relative h-full animate-fade-in pt-8 md:pt-10">
-          {/* Card - same bottom position as left */}
-          <div className="absolute left-0 right-0 bg-white p-5 rounded-lg border border-paper-edge" style={{ bottom: '25%', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-            <h3 className="font-sans-kr font-bold text-ink text-[0.88rem] mb-2">과목별 집중 학습</h3>
-            <p className="text-ink-light text-[0.82rem] mb-4 leading-[1.85]" style={{ wordBreak: 'keep-all' }}>어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {['물리', '화학', '생명과학', '지구과학'].map(sub => (
-                <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-2.5 px-2 rounded-lg text-[0.78rem] font-sans-kr font-medium transition-all ${selectedSubject === sub ? 'bg-cover text-paper border border-cover' : 'bg-white text-ink-light border border-paper-edge hover:border-accent hover:text-accent'}`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
-                  {sub}
-                </button>
-              ))}
+          {/* 카드 영역 */}
+          <div className="flex flex-col gap-4 relative z-20 animate-fade-in">
+            <div className="p-4 md:p-5 rounded-lg" style={{ background: '#f8f3e8', boxShadow: '0 4px 20px rgba(0,0,0,.15)' }}>
+              <h3 className="font-sans-kr font-bold text-[0.88rem] mb-2" style={{ color: '#1a2214' }}>전체 문항 차근차근 풀기</h3>
+              <p className="text-[0.76rem] mb-3 leading-[1.85]" style={{ color: 'rgba(26,34,20,.7)', wordBreak: 'keep-all' }}>1번부터 20번까지 순서대로 진행합니다. 문제마다 꼼꼼한 해설과 필수 개념을 바로 확인하세요.</p>
+              <button onClick={() => onStart('full')} className="w-full text-white py-2.5 rounded-lg font-sans-kr font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm shadow-sm" style={{ background: '#3d7a4a' }}>
+                전체 문항 시작하기 <ArrowRight size={14} />
+              </button>
             </div>
-            <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full bg-accent text-white py-2.5 rounded-lg font-sans-kr font-medium hover:bg-cover transition-colors flex items-center justify-center gap-2 text-sm" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
-              {selectedSubject} 시작하기 <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-      );
 
-      return <BookLayout leftPage={leftContent} rightPage={rightContent} pageNumLeft={1} pageNumRight={2} />;
+            <div className="p-4 md:p-5 rounded-lg" style={{ background: '#f8f3e8', boxShadow: '0 4px 20px rgba(0,0,0,.15)' }}>
+              <h3 className="font-sans-kr font-bold text-[0.88rem] mb-2" style={{ color: '#1a2214' }}>과목별 집중 학습</h3>
+              <p className="text-[0.76rem] mb-3 leading-[1.85]" style={{ color: 'rgba(26,34,20,.7)', wordBreak: 'keep-all' }}>어디서부터 손대야 할지 망설여질 땐, 과목을 선택하여 부담 없이 시작해 보세요.</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {['물리', '화학', '생명과학', '지구과학'].map(sub => (
+                  <button key={sub} onClick={() => setSelectedSubject(sub)} className={`py-2 px-2 rounded-lg text-[0.78rem] font-sans-kr font-medium transition-all ${selectedSubject === sub ? 'shadow-inner' : 'bg-transparent border hover:bg-black/5'}`} style={selectedSubject === sub ? { background: '#3d7a4a', color: '#fff', border: '1px solid #3d7a4a' } : { color: '#1a2214', border: '1px solid rgba(26,34,20,.2)' }}>
+                    {sub}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => onStart('subject', { subject: selectedSubject })} className="w-full text-white py-2.5 rounded-lg font-sans-kr font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 text-sm shadow-sm" style={{ background: '#3d7a4a' }}>
+                {selectedSubject} 시작하기 <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        </CoverLayout>
+      );
     };
 
     const SolveView = ({ problem, onSubmit, isSubmitting, onPrev, onNext, isFirst, isLast, currentIndex, totalProblems, onGoHome, pageNumLeft, pageNumRight }) => {
