@@ -185,6 +185,14 @@
         box-shadow: inset 0 -2px 6px rgba(0, 0, 0, .3);
       }
     }
+
+    @media (min-width: 768px) {
+      .book-aspect {
+        aspect-ratio: 1.3 / 1;
+        max-width: calc((100vh - 50px) * 1.3) !important;
+        flex: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -316,10 +324,11 @@
 3. title 필드 마크다운 금지.
 4. 단락 구분 '\\n\\n' 필수.
 [중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.
-5. [매우 중요] 문제에 보기(ㄱ, ㄴ, ㄷ 또는 가, 나, 다 등)가 있는 경우, 선지(1번, 2번, 3번...) 단위로 묶어서 뭉뚱그려 해설하지 말고, 반드시 각 보기(ㄱ, ㄴ, ㄷ) 단위를 개별 항목으로 나누어 분석해. 
+5. [매우 중요] 수식이나 화학식 작성 시 절대 LaTeX($ 기호 등) 문법을 쓰지 마. H₂O, NH₄⁺ 와 같이 반드시 '유니코드 첨자'를 사용하여 일반 텍스트로만 작성해.
+6. [매우 중요] 문제에 보기(ㄱ, ㄴ, ㄷ 또는 가, 나, 다 등)가 있는 경우, 선지(1번, 2번, 3번...) 단위로 묶어서 뭉뚱그려 해설하지 말고, 반드시 각 보기(ㄱ, ㄴ, ㄷ) 단위를 개별 항목으로 나누어 분석해. 
    - options 배열의 label에 'ㄱ', 'ㄴ', 'ㄷ' (혹은 '가', '나', '다')을 넣고 각각이 왜 맞고 틀린지 개별적으로 상세히 설명해. 
    - 보기가 아예 없는 단순 5지선다형 문제일 때만 예외적으로 1~5번 선지를 해설해.
-6. 모든 개별 보기 설명이 끝난 후, options 배열 마지막 항목으로 label: '정답 도출'을 추가하여, 최종적으로 앞서 분석한 보기들을 바탕으로 왜 해당 번호가 최종 정답인지 1~2문장으로 결론을 지어줘.`;
+7. 모든 개별 보기 설명이 끝난 후, options 배열 마지막 항목으로 label: '정답 도출'을 추가하여, 최종적으로 앞서 분석한 보기들을 바탕으로 왜 해당 번호가 최종 정답인지 1~2문장으로 결론을 지어줘.`;
 
     const CONCEPT_FEW_SHOT = `당신은 다정하고 차분한 1타 과학 선생님이야. 학생이 물어본 과학 개념어를 아래 JSON 포맷에 맞게 설명해 줘.
 [절대 규칙]
@@ -330,7 +339,8 @@
 5. etymology.hanjaSummary에는 한자 어원을 바탕으로 이 단어가 왜 이런 이름이 붙었는지 한 문장으로 설명해줘. 이 설명은 definition과 내용이 겹치지 않도록 어원의 의미에만 집중해.
 6. definition.summary에 한 문장 핵심 정의를 적고, definition.detail에는 이 개념이 실제 과학 문제(특히 고1 3월 모의고사)에서 어떤 맥락으로 출제되는지, 왜 중요한지, 관련 현상이나 원리를 구체적인 예시와 함께 상세하게 4~6문장으로 설명해. 학생이 이 개념만 읽고도 문제를 풀 수 있을 정도로 충분히 설명해줘.
 7. 비유와 스토리(analogyAndStory)는 일상적인 경험에 비유해서 설명해줘.
-8. [중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.`;
+8. [중요] 학생의 이름을 모르기 때문에 절대 'OO이', 'OO아', '학생!' 같은 호칭을 쓰지 마. 이름 없이 자연스럽게 말해.
+9. [매우 중요] 수식이나 화학식 작성 시 절대 LaTeX($ 기호 등) 문법을 쓰지 마. H₂O, NH₄⁺ 와 같이 반드시 '유니코드 첨자'를 사용하여 일반 텍스트로만 작성해.`;
 
     // --- COMPONENTS ---
     const ChatInput = ({ onSubmit, placeholder, className }) => {
@@ -351,7 +361,7 @@
       return (
         <div className="h-full flex flex-col items-center justify-center p-3 md:p-5">
           {/* Book Shell */}
-          <div className="w-full max-w-[1100px] book-shell relative flex rounded-r-[10px] rounded-l-[4px] flex-1" style={{ padding: '6px 6px 6px 0', background: '#1e3a28', maxHeight: 'calc(100vh - 50px)', minHeight: 0 }}>
+          <div className="w-full book-shell book-aspect relative flex rounded-r-[10px] rounded-l-[4px] flex-1" style={{ padding: '6px 6px 6px 0', background: '#1e3a28', maxHeight: 'calc(100vh - 50px)', minHeight: 0 }}>
             {/* Spine */}
             <div className="hidden md:block book-spine-bg rounded-l-[4px] relative" style={{ width: '22px', minWidth: '22px' }}>
               <div className="spine-gold-line absolute top-[8%] bottom-[8%] left-1/2 w-px opacity-40"></div>
@@ -516,8 +526,9 @@
       return <BookLayout leftPage={leftContent} rightPage={rightContent} onGoHome={onGoHome} pageNumLeft={pageNumLeft} pageNumRight={pageNumRight} />;
     };
 
-    const ExplainView = ({ explanation, problem, userAnswer, onConceptClick, onNextProblem, isLastProblem, onGoHome, pageNumLeft, pageNumRight }) => {
+    const ExplainView = ({ explanation, problem, userAnswer, onConceptClick, onAskQuestion, onNextProblem, isLastProblem, onGoHome, pageNumLeft, pageNumRight }) => {
       const isCorrect = parseInt(userAnswer) === problem.correctAnswer;
+      const chatHistory = explanation.chatHistory || [];
       const optionsList = Array.isArray(explanation.options) ? explanation.options : [];
       const conceptsList = Array.isArray(explanation.concepts) ? explanation.concepts : [];
 
@@ -588,7 +599,7 @@
 
           <div className="pt-5 mt-1" style={{ borderTop: '1px solid rgba(44,36,22,.08)' }}>
             <p className="font-sans-kr text-[0.7rem] font-medium text-ink-faint mb-3 text-center tracking-wider">모르는 개념이 있다면 눌러봐!</p>
-            <div className="flex flex-wrap justify-center gap-2 mb-5">
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
               {conceptsList.map((c, idx) => {
                 const cName = cleanTitleStr(typeof c === 'object' ? c.name : c);
                 return (
@@ -598,9 +609,26 @@
                 );
               })}
             </div>
-            <button onClick={onNextProblem} className="w-full bg-accent text-white py-3 rounded-lg font-sans-kr font-medium hover:bg-cover transition-colors flex items-center justify-center gap-2 text-sm" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
-              {isLastProblem ? '결과 확인하기' : '다음 문제로'} <ChevronRight size={14} />
-            </button>
+
+            {chatHistory.length > 0 && (
+              <div className="space-y-3 mb-4">
+                {chatHistory.map((chat, idx) => (
+                  <div key={idx} className={`flex gap-2 ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {chat.role === 'assistant' && <img src={TEACHER_ICON} alt="선생님" className="w-8 h-8 shrink-0 rounded-full border border-paper-edge bg-white shadow-sm mt-0.5" />}
+                    <div className={`p-3 rounded-lg text-[0.82rem] font-sans-kr leading-relaxed ${chat.role === 'user' ? 'bg-accent/10 text-ink-light ml-8 rounded-tr-none' : 'bg-white border w-full rounded-tl-none'} ${chat.isLoading ? 'animate-pulse text-ink-faint' : 'text-ink'}`} style={chat.role === 'assistant' ? { borderColor: 'rgba(44,36,22,.06)', boxShadow: '0 1px 3px rgba(0,0,0,.03)' } : {}}>
+                      {chat.isLoading ? '답변을 작성하고 있어...' : <FormattedParagraphs text={chat.content} />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <ChatInput onSubmit={onAskQuestion} className="mb-6" placeholder="이 문제에 대해 더 궁금한 점 물어보기!" />
+
+            <div className="pt-5 mt-1" style={{ borderTop: '1px dotted rgba(44,36,22,.15)' }}>
+              <button onClick={onNextProblem} className="w-full bg-accent text-white py-3 rounded-lg font-sans-kr font-medium hover:bg-cover transition-colors flex items-center justify-center gap-2 text-sm" style={{ boxShadow: '0 2px 8px rgba(61,122,74,.2)' }}>
+                {isLastProblem ? '결과 확인하기' : '다음 문제로'} <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -869,6 +897,38 @@
         }
       }, [isWaitingForExplanation, prefetchStatus, currentProblem]);
 
+      const handleAskQuestion = async (question) => {
+        if (!currentProblem) return;
+        const pId = currentProblem.id;
+
+        setGeneratedExplanations(prev => {
+          const current = prev[pId];
+          const chatHistory = current.chatHistory || [];
+          return { ...prev, [pId]: { ...current, chatHistory: [...chatHistory, { role: 'user', content: question }, { role: 'assistant', content: '', isLoading: true }] } };
+        });
+
+        try {
+          const base64Img = await imageUrlToBase64(currentProblem.imageUrl);
+          const prompt = `문제 정보: 과목 ${currentProblem.subject}. 학생은 이미 이 문제의 해설을 다 읽었으므로 절대 문제를 처음부터 다시 설명하거나 풀이하지 마! 즉각적으로 학생의 질문에만 집중해서 핵심만 명확히 답변해줘.\n\n학생 질문: "${question}"`;
+          const systemInstruction = "너는 다정하고 학생을 아끼는 1타 과학 강사야. 절대 'OO이', 'OO아', '학생!' 같은 호칭 금지. 존댓말 금지. [매우 중요] 절대 LaTeX 수식($ 기호 등)을 쓰지 마. NH₄⁺, H₂O 와 같이 반드시 '유니코드 첨자'를 사용하여 일반 텍스트로만 화학식/수식을 적어.";
+          const result = await callGeminiAPI(prompt, systemInstruction, base64Img);
+
+          setGeneratedExplanations(prev => {
+            const current = prev[pId];
+            const updatedChat = [...current.chatHistory];
+            updatedChat[updatedChat.length - 1] = { role: 'assistant', content: result };
+            return { ...prev, [pId]: { ...current, chatHistory: updatedChat } };
+          });
+        } catch {
+          setGeneratedExplanations(prev => {
+            const current = prev[pId];
+            const updatedChat = [...current.chatHistory];
+            updatedChat[updatedChat.length - 1] = { role: 'assistant', content: "미안해. 답변을 불러오는 중에 오류가 생겼어. 다시 한 번 물어볼래?" };
+            return { ...prev, [pId]: { ...current, chatHistory: updatedChat } };
+          });
+        }
+      };
+
       const handleConceptClick = async (conceptName) => {
         if (generatedConcepts[conceptName]) { setViewingConceptName(conceptName); setAppState('CONCEPT'); return; }
         setAppState('LOADING_CONCEPT');
@@ -900,7 +960,7 @@
         <React.Fragment>
           {appState === 'HOME' && <HomeView onStart={startSession} />}
           {appState === 'SOLVE' && currentProblem && <SolveView problem={currentProblem} isSubmitting={isWaitingForExplanation} onSubmit={handleSubmitAnswer} onPrev={handlePrevProblem} onNext={handleNextProblem} isFirst={sessionData.currentIndex === 0} isLast={sessionData.currentIndex === sessionData.queue.length - 1} currentIndex={sessionData.currentIndex} totalProblems={sessionData.queue.length} onGoHome={handleGoHome} pageNumLeft={currentLeftPage} pageNumRight={currentRightPage} />}
-          {appState === 'EXPLAIN' && currentProblem && currentExplanation && <ExplainView explanation={currentExplanation} problem={currentProblem} userAnswer={sessionData.answers[currentProblem.id]} onConceptClick={handleConceptClick} onNextProblem={handleNextProblem} isLastProblem={sessionData.currentIndex === sessionData.queue.length - 1} onGoHome={handleGoHome} pageNumLeft={currentLeftPage} pageNumRight={currentRightPage} />}
+          {appState === 'EXPLAIN' && currentProblem && currentExplanation && <ExplainView explanation={currentExplanation} problem={currentProblem} userAnswer={sessionData.answers[currentProblem.id]} onConceptClick={handleConceptClick} onAskQuestion={handleAskQuestion} onNextProblem={handleNextProblem} isLastProblem={sessionData.currentIndex === sessionData.queue.length - 1} onGoHome={handleGoHome} pageNumLeft={currentLeftPage} pageNumRight={currentRightPage} />}
           {appState === 'LOADING_CONCEPT' && (
             <BookLayout
               leftPage={<div className="flex flex-col items-center justify-center h-full"><Loader2 className="w-8 h-8 text-accent animate-spin mb-3" /><p className="font-sans-kr font-medium text-sm text-ink-light">개념 정리 중...</p></div>}
