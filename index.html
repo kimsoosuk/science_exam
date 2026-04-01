@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>김수석 과학 해설 선생님</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#f8f3e8', 'paper-edge': '#e8dfc8',
+            ink: '#1a1510', 'ink-light': '#3d3225', 'ink-faint': '#8a7c6a',
+            accent: '#3d7a4a', 'accent-warm': '#4a9e5c',
+            cover: '#1e3a28', 'cover-light': '#2a5438', spine: '#152a1c',
+            gold: '#c4a44a', 'gold-dim': '#8a7432', 'red-soft': '#a63d2f',
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+      "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="book-ui.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module" src="app.jsx"></script>
+</body>
+</html>

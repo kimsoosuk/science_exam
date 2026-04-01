@@ -1,0 +1,12 @@
+/* ═══════════════════════════════════════════════════
+   app.css — 이 앱 전용 스타일
+   book-ui.css와 분리되어 있으므로 책 UI를 다른 앱에
+   복사할 때 이 파일은 가져가지 않아도 됩니다.
+   ═══════════════════════════════════════════════════ */
+
+.font-sans-kr { font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+.font-serif-kr { font-family: 'Gowun Batang', 'Batang', 'Georgia', serif; }
+
+.teacher-box { background: #f0ebe0; border-left: 3px solid #3d7a4a; }
+.quote-box   { border-left: 2px solid #4a9e5c; background: rgba(74,158,92,.10); }
+.hl          { background: linear-gradient(180deg, transparent 58%, rgba(74,158,92,.18) 58%); padding: 0 2px; }
