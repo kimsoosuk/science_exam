@@ -28,11 +28,13 @@ const CONCEPT_SCHEMA = {
   type: "OBJECT",
   properties: {
     title: { type: "STRING" },
-    etymology: { type: "OBJECT", properties: {
-      hasHanja: { type: "BOOLEAN" },
-      hanjaChars: { type: "ARRAY", items: { type: "OBJECT", properties: { char: { type: "STRING" }, meaning: { type: "STRING" }, reading: { type: "STRING" } }, required: ["char", "meaning", "reading"] } },
-      hanjaSummary: { type: "STRING" }, hasLoanword: { type: "BOOLEAN" }, loanwordTerm: { type: "STRING" }, loanwordMeaning: { type: "STRING" },
-    }, required: ["hasHanja", "hanjaChars", "hanjaSummary", "hasLoanword", "loanwordTerm", "loanwordMeaning"] },
+    etymology: {
+      type: "OBJECT", properties: {
+        hasHanja: { type: "BOOLEAN" },
+        hanjaChars: { type: "ARRAY", items: { type: "OBJECT", properties: { char: { type: "STRING" }, meaning: { type: "STRING" }, reading: { type: "STRING" } }, required: ["char", "meaning", "reading"] } },
+        hanjaSummary: { type: "STRING" }, hasLoanword: { type: "BOOLEAN" }, loanwordTerm: { type: "STRING" }, loanwordMeaning: { type: "STRING" },
+      }, required: ["hasHanja", "hanjaChars", "hanjaSummary", "hasLoanword", "loanwordTerm", "loanwordMeaning"]
+    },
     definition: { type: "OBJECT", properties: { summary: { type: "STRING" }, detail: { type: "STRING" } }, required: ["summary", "detail"] },
     analogyAndStory: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" } }, required: ["title", "content"] },
     relatedConcepts: { type: "ARRAY", items: { type: "STRING" } },
@@ -181,10 +183,10 @@ export default {
       let geminiParams;
 
       switch (action) {
-        case 'explain':  geminiParams = buildExplainRequest(body); break;
-        case 'concept':  geminiParams = buildConceptRequest(body); break;
-        case 'summary':  geminiParams = buildSummaryRequest(body); break;
-        case 'ask':      geminiParams = buildAskRequest(body); break;
+        case 'explain': geminiParams = buildExplainRequest(body); break;
+        case 'concept': geminiParams = buildConceptRequest(body); break;
+        case 'summary': geminiParams = buildSummaryRequest(body); break;
+        case 'ask': geminiParams = buildAskRequest(body); break;
         default:
           // 하위 호환: action 없으면 기존 방식 (raw payload → Gemini 직접 전달)
           const model = "gemini-3.1-flash-lite-preview";
